@@ -8,7 +8,10 @@
         [Parameter(Position=2)] [string[]] $JoinKeys,
         [Parameter()] [switch] $MatchesOnly,
         [Parameter()] [switch] $FirstRightOnly,
-        [Parameter()] [switch] $IncludeUnmatchedRight
+        [Parameter()] [switch] $IncludeUnmatchedRight,
+        [Parameter()] [string[]] $KeepProperty,
+        [Parameter()] [switch] $OverwriteAll,
+        [Parameter()] [switch] $OverwriteNull
     )
     Begin
     {
@@ -58,10 +61,13 @@
             foreach ($property in $joinObjectCopy.PSObject.Properties)
             {
                 if ($property.Name -in $JoinKeys) { continue }
+                if ($PSBoundParameters.ContainsKey('KeepProperty') -and $property.Name -notin $KeepProperty) { continue }
+                if ($newObject.Contains($property.Name) -and (!$OverwriteAll -or
+                    ([String]::IsNullOrWhiteSpace($newObject[$property.Name] -and !$OverwriteNull)))) { continue }
                 $newObject[$property.Name] = $property.Value
                 [pscustomobject]$newObject
-                if ($FirstRightOnly) { break }
             }
+            if ($FirstRightOnly) { break }
         }
     }
     End
@@ -85,6 +91,7 @@
                 foreach ($joinProperty in $joinObjectCopy.PSObject.Properties)
                 {
                     if ($joinProperty.Name -in $JoinKeys) { continue }
+                    if ($PSBoundParameters.Contains('KeepProperty') -and $property.Name -notin $KeepProperty) { continue }
                     $newObject[$joinProperty.Name] = $joinProperty.Value
                 }
                 [pscustomobject]$newObject
