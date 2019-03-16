@@ -1,4 +1,36 @@
-﻿Function Join-List
+﻿
+Add-Type @"
+using System;
+using System.Management.Automation;
+
+namespace Rhodium.Data
+{
+    public static class DataHelpers
+    {
+        public static PSObject CloneObject(PSObject BaseObject, string[] AddProperties)
+        {
+            PSObject newObject = new PSObject();
+            foreach (var property in BaseObject.Properties)
+            {
+                if (property is PSNoteProperty)
+                    newObject.Properties.Add(property);
+                else
+                    newObject.Properties.Add(new PSNoteProperty(property.Name, property.Value));
+            }
+            if (AddProperties == null)
+                return newObject;
+            foreach (string propertyName in AddProperties)
+            {
+                if (newObject.Properties[propertyName] == null)
+                    newObject.Properties.Add(new PSNoteProperty(propertyName, null));
+            }
+            return newObject;
+        }
+    }
+}
+"@
+
+Function Join-List
 {
     Param
     (
