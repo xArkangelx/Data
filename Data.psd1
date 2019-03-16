@@ -90,7 +90,9 @@ FunctionsToExport = @(
     'Join-List',
     'Join-Index',
     'ConvertTo-Dictionary',
-    'Select-DuplicatePropertyValue'
+    'Select-DuplicatePropertyValue',
+    'Set-PropertyJoinValue',
+    'Set-PropertySplitValue'
 )
 
 # Cmdlets to export from this module

@@ -227,3 +227,41 @@ Function Select-DuplicatePropertyValue
         }
     }
 }
+
+Function Set-PropertyJoinValue
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
+        [Parameter(Mandatory=$true, Position=1)] [string] $JoinWith
+    )
+    Process
+    {
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $null)
+        foreach ($prop in $Property)
+        {
+            $newInputObject.$prop = $newInputObject.$prop -join $JoinWith
+        }
+        $newInputObject
+    }
+}
+
+Function Set-PropertySplitValue
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
+        [Parameter(Mandatory=$true, Position=1)] [string] $SplitOn
+    )
+    Process
+    {
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $null)
+        foreach ($prop in $Property)
+        {
+            $newInputObject.$prop = $newInputObject.$prop -split $SplitOn
+        }
+        $newInputObject
+    }
+}
