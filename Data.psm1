@@ -327,6 +327,32 @@ Function Invoke-PipelineThreading
     }
 }
 
+Function Set-PropertyValue
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
+        [Parameter(Position=1)] [object] $Value
+    )
+    Process
+    {
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $null)
+        $newValue = $Value
+        if ($Value -is [ScriptBlock])
+        {
+            $varList = New-Object System.Collections.Generic.List[PSVariable]
+            $varList.Add((New-Object PSVariable "_", $InputObject))
+            $newValue = foreach ($item in $Value.InvokeWithContext($null, $varList, $null)) { $item }
+        }
+        foreach ($prop in $Property)
+        {
+            $newInputObject.$prop = $newValue
+        }
+        $newInputObject
+    }
+}
+
 Function Set-PropertyJoinValue
 {
     Param
