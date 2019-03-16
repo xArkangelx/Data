@@ -89,7 +89,8 @@ NestedModules = @('Data.psm1')
 FunctionsToExport = @(
     'Join-List',
     'Join-Index',
-    'ConvertTo-Dictionary'
+    'ConvertTo-Dictionary',
+    'Select-DuplicatePropertyValue'
 )
 
 # Cmdlets to export from this module

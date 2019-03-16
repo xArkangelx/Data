@@ -196,3 +196,34 @@ Function ConvertTo-Dictionary
         $dict
     }
 }
+
+Function Select-DuplicatePropertyValue
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true,Position=0)] [string[]] $Property,
+        [Parameter()] [string] $KeyJoin = '|'
+    )
+    Begin
+    {
+        $existingDict = @{}
+    }
+    Process
+    {
+        $keyValue = $(foreach ($key in $Property) { $InputObject.$key }) -join $KeyJoin
+        if ($existingDict.Contains($keyValue))
+        {
+            if ($existingDict[$keyValue] -ne $null)
+            {
+                $existingDict[$keyValue]
+                $existingDict[$keyValue] = $null
+            }
+            $InputObject
+        }
+        else
+        {
+            $existingDict[$keyValue] = $InputObject
+        }
+    }
+}
