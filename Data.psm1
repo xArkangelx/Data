@@ -155,6 +155,37 @@ Function Join-Index
     }
 }
 
+Function Join-Percentage
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0)] [string] $CountProperty = 'Count',
+        [Parameter()] [string] $PercentageProperty = 'Percentage',
+        [Parameter()] [int] $DecimalPlaces = 0
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        $total = $inputObjectList | Measure-Object -Sum $CountProperty | ForEach-Object Sum
+        foreach ($inputObject in $inputObjectList)
+        {
+            $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, @($PercentageProperty))
+            $percentage = [Math]::Round($newInputObject.$CountProperty * 100 / $total, $DecimalPlaces)
+            $newInputObject.$PercentageProperty = "$percentage%"
+            $newInputObject
+        }
+    }
+}
+
 Function ConvertTo-Dictionary
 {
     Param

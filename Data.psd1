@@ -89,6 +89,7 @@ NestedModules = @('Data.psm1')
 FunctionsToExport = @(
     'Join-List',
     'Join-Index',
+    'Join-Percentage',
     'ConvertTo-Dictionary',
     'Select-DuplicatePropertyValue',
     'Select-Excluding',
