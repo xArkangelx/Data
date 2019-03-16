@@ -15,7 +15,7 @@
 ModuleVersion = '1.0'
 
 # ID used to uniquely identify this module
-GUID = '1d711217-4b93-4132-9835-3fc1063e9fa6'
+GUID = '191cf922-f94e-4670-9f6b-1818ae32f66b'
 
 # Author of this module
 Author = 'Justin Coon'
