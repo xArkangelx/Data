@@ -11,14 +11,15 @@
         [Parameter()] [switch] $IncludeUnmatchedRight,
         [Parameter()] [string[]] $KeepProperty,
         [Parameter()] [switch] $OverwriteAll,
-        [Parameter()] [switch] $OverwriteNull
+        [Parameter()] [switch] $OverwriteNull,
+        [Parameter()] [string] $KeyJoin = '|'
     )
     Begin
     {
         $joinDict = [ordered]@{}
         foreach ($joinObject in $JoinData)
         {
-            $keyValue = $(foreach ($joinKey in $JoinKeys) { $joinObject.$joinKey }) -join '|'
+            $keyValue = $(foreach ($joinKey in $JoinKeys) { $joinObject.$joinKey }) -join $KeyJoin
             if (!$joinDict.Contains($keyValue))
             {
                 $joinDict[$keyValue] = New-Object System.Collections.Generic.List[object]
@@ -33,7 +34,7 @@
     Process
     {
         if (!$InputObject) { return }
-        $keyValue = $(foreach ($inputKey in $InputKeys) { $InputObject.$inputKey }) -join '|'
+        $keyValue = $(foreach ($inputKey in $InputKeys) { $InputObject.$inputKey }) -join $KeyJoin
         $joinObject = $joinDict[$keyValue]
         if (!$joinObject -and $MatchesOnly) { return }
         if (!$joinObject)
