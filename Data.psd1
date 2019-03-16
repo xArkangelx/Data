@@ -91,6 +91,7 @@ FunctionsToExport = @(
     'Join-Index',
     'ConvertTo-Dictionary',
     'Select-DuplicatePropertyValue',
+    'Invoke-PipelineThreading',
     'Set-PropertyJoinValue',
     'Set-PropertySplitValue',
     'Get-Weekday',
