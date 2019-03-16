@@ -228,6 +228,62 @@ Function Select-DuplicatePropertyValue
     }
 }
 
+Function Select-Excluding
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true,Position=0)] [string[]] $InputKeys,
+        [Parameter(Position=1)] [object[]] $CompareData,
+        [Parameter(Mandatory=$true,Position=2)] [string[]] $CompareKeys,
+        [Parameter()] [string] $KeyJoin = '|'
+    )
+    Begin
+    {
+        $noData = !$CompareData
+        $compareDict = @{}
+        foreach ($compareObject in $CompareData)
+        {
+            $keyValue = $(foreach ($key in $CompareKeys) { $compareObject.$key }) -join $KeyJoin
+            $compareDict[$keyValue] = $true
+        }
+    }
+    Process
+    {
+        if ($noData) { return $InputObject }
+        $keyValue = $(foreach ($key in $InputKeys) { $InputObject.$key }) -join $KeyJoin
+        if (!$compareDict[$keyValue]) { $InputObject }
+    }
+}
+
+Function Select-Including
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true,Position=0)] [string[]] $InputKeys,
+        [Parameter(Position=1)] [object[]] $CompareData,
+        [Parameter(Mandatory=$true,Position=2)] [string[]] $CompareKeys,
+        [Parameter()] [string] $KeyJoin = '|'
+    )
+    Begin
+    {
+        $noData = !$CompareData
+        $compareDict = @{}
+        foreach ($compareObject in $CompareData)
+        {
+            $keyValue = $(foreach ($key in $CompareKeys) { $compareObject.$key }) -join $KeyJoin
+            $compareDict[$keyValue] = $true
+        }
+    }
+    Process
+    {
+        if ($noData) { return }
+        $keyValue = $(foreach ($key in $InputKeys) { $InputObject.$key }) -join $KeyJoin
+        if ($compareDict[$keyValue]) { $InputObject }
+    }
+}
+
 Function Invoke-PipelineThreading
 {
     Param

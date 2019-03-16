@@ -91,6 +91,8 @@ FunctionsToExport = @(
     'Join-Index',
     'ConvertTo-Dictionary',
     'Select-DuplicatePropertyValue',
+    'Select-Excluding',
+    'Select-Including',
     'Invoke-PipelineThreading',
     'Write-PipelineProgress',
     'Set-PropertyValue',
