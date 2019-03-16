@@ -488,6 +488,22 @@ Function Set-PropertySplitValue
     }
 }
 
+Function Get-Sentences
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true, Position=0)] [string] $Text
+    )
+    Process
+    {
+        $lineList = $Text -split "`r`n" -split "(?<=[^\.].[\.\?\!]) +"
+        foreach ($line in $lineList)
+        {
+            if (![String]::IsNullOrWhiteSpace($line)) { $line }
+        }
+    }
+}
+
 Function Get-StringHash
 {
     Param
