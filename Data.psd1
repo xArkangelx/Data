@@ -96,6 +96,7 @@ FunctionsToExport = @(
     'Set-PropertyValue',
     'Set-PropertyJoinValue',
     'Set-PropertySplitValue',
+    'Get-StringHash',
     'Get-Weekday',
     'Assert-Count'
 )

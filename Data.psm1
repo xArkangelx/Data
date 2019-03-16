@@ -432,6 +432,24 @@ Function Set-PropertySplitValue
     }
 }
 
+Function Get-StringHash
+{
+    Param
+    (
+        [Parameter(Mandatory=$true, Position=0)] [string] $String,
+        [Parameter(Position=1)] [ValidateSet('SHA1', 'SHA256', 'SHA384', 'SHA512', 'MD5', 'RIPEMD160')]
+            [string] $HashName = 'SHA1'
+    )
+    End
+    {
+        $stringBuilder = New-Object System.Text.StringBuilder
+        $algorithm = [System.Security.Cryptography.HashAlgorithm]::Create($HashName)
+        $bytes = $algorithm.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($String))
+        $bytes | ForEach-Object { [void]$stringBuilder.Append($_.ToString('x2')) }
+        $stringBuilder.ToString()
+    }
+}
+
 Function Get-Weekday
 {
     Param
