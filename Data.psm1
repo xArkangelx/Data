@@ -265,3 +265,75 @@ Function Set-PropertySplitValue
         $newInputObject
     }
 }
+
+Function Get-Weekday
+{
+    Param
+    (
+        [Parameter(Position=0,ValueFromPipeline=$true)] [datetime] $Date = [DateTime]::Now,
+        [Parameter(Mandatory=$true, ParameterSetName='Next')]
+            [ValidateSet('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday')]
+            [string] $Next,
+        [Parameter(Mandatory=$true, ParameterSetName='Last')]
+            [ValidateSet('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday')]
+            [string] $Last,
+        [Parameter()] [switch] $NotToday,
+        [Parameter()] [string] $Format,
+        [Parameter()] [int] $WeeksAway = 1
+    )
+    Process
+    {
+        $returnDate = $null
+        $weekDayCount = 7 * ($WeeksAway - 1)
+        if ($PSCmdlet.ParameterSetName -eq 'Next')
+        {
+            if ($NotToday.IsPresent -and $Date.DayOfWeek -eq $Next) { $Date = $Date.AddDays(1) }
+            $daysUntilNext = (([int]([System.DayOfWeek]::$Next)) - ([int]$Date.DayOfWeek) + 7) % 7
+            $returnDate = $Date.AddDays($daysUntilNext + $weekDayCount)
+        }
+        elseif ($PSCmdlet.ParameterSetName -eq 'Last')
+        {
+            if ($NotToday.IsPresent -and $Date.DayOfWeek -eq $Last) { $Date = $Date.AddDays(-1) }
+            $daysUntilPrevious = (([int]$Date.DayOfWeek) - ([int]([System.DayOfWeek]::$Last)) + 7) % 7
+            $returnDate = $Date.AddDays(-1 * $daysUntilPrevious - $weekDayCount)
+        }
+
+        if ($Format)
+        {
+            $returnDate.ToString($Format)
+        }
+        else
+        {
+            $returnDate
+        }
+    }
+}
+
+Function Assert-Count
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true, Position=0)] [int64[]] $Count,
+        [Parameter()] [string] $Message
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+    }
+    Process
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+        if (!$MyInvocation.ExpectingInput) { throw "You must provide pipeline input to this function." }
+        $inputObjectList.Add($inputObjectList)
+    }
+    End
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+        if ($inputObjectList.Count -notin $Count)
+        {
+            if (!$Message) { $Message = "Assertion failed: Object count was $($inputObjectList.Count), expected $($Count -join ', ')." }
+            throw $Message
+        }
+    }
+}

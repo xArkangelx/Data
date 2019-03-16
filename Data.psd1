@@ -92,7 +92,9 @@ FunctionsToExport = @(
     'ConvertTo-Dictionary',
     'Select-DuplicatePropertyValue',
     'Set-PropertyJoinValue',
-    'Set-PropertySplitValue'
+    'Set-PropertySplitValue',
+    'Get-Weekday',
+    'Assert-Count'
 )
 
 # Cmdlets to export from this module
