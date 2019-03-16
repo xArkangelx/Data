@@ -92,6 +92,7 @@ FunctionsToExport = @(
     'ConvertTo-Dictionary',
     'Select-DuplicatePropertyValue',
     'Invoke-PipelineThreading',
+    'Write-PipelineProgress',
     'Set-PropertyValue',
     'Set-PropertyJoinValue',
     'Set-PropertySplitValue',

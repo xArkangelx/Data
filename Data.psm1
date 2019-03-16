@@ -327,6 +327,47 @@ Function Invoke-PipelineThreading
     }
 }
 
+Function Write-PipelineProgress
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0)] [string] $OperationProperty,
+        [Parameter()] [string] $Activity = "Current Progress"
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+        $id = $PSCmdlet.GetHashCode()
+        $progressRecord = New-Object System.Management.Automation.ProgressRecord $id, $Activity, "Collecting Input"
+        $PSCmdlet.WriteProgress($progressRecord)
+        
+    }
+    Process
+    {
+        $inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        $count = $inputObjectList.Count
+        for ($i = 0; $i -lt $count; $i++)
+        {
+            $object = $inputObjectList[$i]
+            $object
+            $operation = $null
+            if ($OperationProperty) { $operation = $object.$OperationProperty }
+            if ([String]::IsNullOrEmpty($operation)) { $operation = "$object" }
+            $progressRecord = New-Object System.Management.Automation.ProgressRecord $id, $Activity, $operation
+            $progressRecord.PercentComplete = $i * 100 / $count
+            $PSCmdlet.WriteProgress($progressRecord)
+        }
+
+        $progressRecord = New-Object System.Management.Automation.ProgressRecord $id, $Activity, "Completed"
+        $progressRecord.RecordType = 'Completed'
+        $PSCmdlet.WriteProgress($progressRecord)
+    }
+}
+
 Function Set-PropertyValue
 {
     Param
