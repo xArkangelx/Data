@@ -546,7 +546,7 @@ Function Set-PropertyValue
     )
     Process
     {
-        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $null)
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
         $newValue = $Value
         if ($Value -is [ScriptBlock])
         {
