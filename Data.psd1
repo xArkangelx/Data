@@ -87,6 +87,7 @@ NestedModules = @('Data.psm1')
 
 # Functions to export from this module
 FunctionsToExport = @(
+    'Join-GroupHeaderRow',
     'Join-List',
     'Join-Index',
     'Join-Percentage',

@@ -30,6 +30,54 @@ namespace Rhodium.Data
 }
 "@
 
+Function Join-GroupHeaderRow
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0, Mandatory=$true)] [string] $Property,
+        [Parameter(Position=1, Mandatory=$true)] [ScriptBlock] $ObjectScript,
+        [Parameter()] [string[]] $KeepFirst,
+        [Parameter()] [string[]] $Subtotal,
+        [Parameter()] [switch] $AsFooter
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        $groupList = $inputObjectList | Group-Object $Property
+        foreach ($group in $groupList)
+        {
+            $propertyList = $group.Group[0].PSObject.Properties.Name
+            $variables = New-Object PSVariable "Group", @($group.Group)
+            $newObject = New-Object PSCustomObject -Property $ObjectScript.InvokeWithContext($null, $variables, $null)[0] |
+                Select-Object $propertyList
+
+            foreach ($subtotalProperty in $Subtotal)
+            {
+                $sum = $group.Group | Measure-Object -Sum $subtotalProperty | ForEach-Object Sum
+                $newObject.$subtotalProperty = $sum
+            }
+
+            foreach ($keepFirstProperty in $KeepFirst)
+            {
+                $newObject.$keepFirstProperty = $group.Group[0].$firstProperty
+            }
+
+            if ($AsFooter) { $group.Group }
+            $newObject
+            if (!$AsFooter) { $group.Group }
+        }
+    }
+}
+
 Function Join-List
 {
     Param
