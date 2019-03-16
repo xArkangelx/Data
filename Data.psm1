@@ -186,6 +186,39 @@ Function Join-Percentage
     }
 }
 
+Function Join-TotalRow
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0)] [string] $CountProperty = 'Count',
+        [Parameter()] [string] $PercentageProperty = 'Percentage',
+        [Parameter()] [string] $TotalLabel = 'Total'
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $inputObjectList.Add($InputObject)
+        $InputObject
+    }
+    End
+    {
+        $total = $inputObjectList | Measure-Object -Sum $CountProperty | ForEach-Object Sum
+        $totalRecord = 1 | Select-Object @($InputObject.PSObject.Properties.Name)
+        @($totalRecord.PSObject.Properties)[0].Value = $TotalLabel
+        $totalRecord.$CountProperty = $total
+        if ($InputObject.PSObject.Properties[$PercentageProperty])
+        {
+            $totalRecord.$PercentageProperty = "100%"
+        }
+        $totalRecord
+    }
+}
+
 Function ConvertTo-Dictionary
 {
     Param
