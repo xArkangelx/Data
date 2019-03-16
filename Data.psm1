@@ -134,6 +134,27 @@ Function Join-List
     }
 }
 
+Function Join-Index
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0)] [string] $IndexProperty = 'Index',
+        [Parameter()] [int] $Start = 0
+    )
+    Begin
+    {
+        $index = $Start
+    }
+    Process
+    {
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, @($IndexProperty))
+        $newInputObject.$IndexProperty = $index
+        $newInputObject
+        $index += 1
+    }
+}
+
 Function ConvertTo-Dictionary
 {
     Param

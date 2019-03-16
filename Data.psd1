@@ -88,6 +88,7 @@ NestedModules = @('Data.psm1')
 # Functions to export from this module
 FunctionsToExport = @(
     'Join-List',
+    'Join-Index',
     'ConvertTo-Dictionary'
 )
 
