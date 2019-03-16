@@ -99,6 +99,7 @@ FunctionsToExport = @(
     'Select-Including',
     'Invoke-PipelineThreading',
     'Write-PipelineProgress',
+    'Set-PropertyOrder',
     'Set-PropertyValue',
     'Set-PropertyJoinValue',
     'Set-PropertySplitValue',

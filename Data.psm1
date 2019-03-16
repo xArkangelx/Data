@@ -585,6 +585,41 @@ Function Write-PipelineProgress
     }
 }
 
+Function Set-PropertyOrder
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0)] [string[]] $Begin,
+        [Parameter()] [string[]] $End
+    )
+    Begin
+    {
+        $endDict = @{}
+        foreach ($propertyName in $End) { $endDict[$propertyName] = $true }
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $newObject = New-Object PSObject
+        $oldPropertyList = $InputObject.PSObject.Properties
+        foreach ($propertyName in $Begin)
+        {
+            if ($oldPropertyList[$propertyName]) { $newObject.PSObject.Properties.Add($oldPropertyList[$propertyName]) }
+        }
+        foreach ($oldProperty in $oldPropertyList)
+        {
+            if ($endDict[$oldProperty.Name]) { continue }
+            $newObject.PSObject.Properties.Add($oldProperty)
+        }
+        foreach ($propertyName in $End)
+        {
+            if ($oldPropertyList[$propertyName]) { $newObject.PSObject.Properties.Add($oldPropertyList[$propertyName]) }
+        }
+        $newObject
+    }
+}
+
 Function Set-PropertyValue
 {
     Param
