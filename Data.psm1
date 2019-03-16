@@ -577,3 +577,56 @@ Function Assert-Count
         }
     }
 }
+
+Function Compress-PlainText
+{
+    Param
+    (
+        [Parameter(Position=0, ValueFromPipeline=$true)] [string] $Text,
+        [Parameter()] [switch] $AsBase64
+    )
+    Begin
+    {
+        $lineList = New-Object System.Collections.Generic.List[string]
+    }
+    Process
+    {
+        $lineList.Add($Text)
+    }
+    End
+    {
+        $textBytes = [System.Text.Encoding]::UTF8.GetBytes(($lineList -join "`r`n"))
+        $stream = New-Object System.IO.MemoryStream
+        $zip = New-Object System.IO.Compression.GZipStream $stream, ([System.IO.Compression.CompressionMode]::Compress)
+        $zip.Write($textBytes, 0, $textBytes.Length)
+        $zip.Close()
+        if ($AsBase64) { return [Convert]::ToBase64String($stream.ToArray()) }
+        $stream.ToArray()
+    }
+}
+
+Function Expand-PlainText
+{
+    Param
+    (
+        [Parameter(ParameterSetName='Bytes', Position=0)] [byte[]] $CompressedBytes,
+        [Parameter(ValueFromPipeline=$true, ParameterSetName='Base64', Position=0)] [string] $CompressedBase64
+    )
+    Process
+    {
+        if ($CompressedBase64) { $CompressedBytes = [Convert]::FromBase64String($CompressedBase64) }
+        $inputStream = New-Object System.IO.MemoryStream (,$CompressedBytes)
+        $outputStream = New-Object System.IO.MemoryStream
+        $zip = New-Object System.IO.Compression.GZipStream $inputStream, ([System.IO.Compression.CompressionMode]::Decompress)
+
+        $temp = [Array]::CreateInstance([byte], 4096)
+        while ($true -and $inputStream.Length)
+        {
+            $count= $zip.Read($temp, 0, 4096)
+            if ($count -eq 0) { break }
+            $outputStream.Write($temp, 0, $count)
+        }
+        $zip.Close()
+        [System.Text.Encoding]::UTF8.GetString($outputStream.ToArray())
+    }
+}

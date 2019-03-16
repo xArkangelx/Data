@@ -100,7 +100,9 @@ FunctionsToExport = @(
     'Set-PropertySplitValue',
     'Get-StringHash',
     'Get-Weekday',
-    'Assert-Count'
+    'Assert-Count',
+    'Compress-PlainText',
+    'Expand-PlainText'
 )
 
 # Cmdlets to export from this module
