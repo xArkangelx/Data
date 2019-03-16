@@ -102,4 +102,44 @@
     }
 }
 
-
+Function ConvertTo-Dictionary
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true,Position=0)] [string[]] $Keys,
+        [Parameter()] [string] $Value,
+        [Parameter()] [string] $KeyJoin = '|',
+        [Parameter()] [switch] $Ordered
+    )
+    Begin
+    {
+        if ($Ordered) { $dict = [ordered]@{} }
+        else { $dict = @{} }
+    }
+    Process
+    {
+        $keyValue = $(foreach ($key in $Keys) { $InputObject.$key }) -join $KeyJoin
+        if ($Value)
+        {
+            if (!$dict.Contains($keyValue))
+            {
+                Write-Warning "Dictionary already contains key '$keyValue'."
+                return
+            }
+            $dict[$keyValue] = $InputObject.$Value
+        }
+        else
+        {
+            if (!$dict.Contains($keyValue))
+            {
+                $dict[$keyValue] = New-Object System.Collections.Generic.List[object]
+            }
+            $dict[$keyValue].Add($InputObject)
+        }
+    }
+    End
+    {
+        $dict
+    }
+}
