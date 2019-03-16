@@ -92,6 +92,7 @@ FunctionsToExport = @(
     'Join-Index',
     'Join-Percentage',
     'Join-TotalRow',
+    'Rename-Property',
     'ConvertTo-Dictionary',
     'Select-DuplicatePropertyValue',
     'Select-Excluding',

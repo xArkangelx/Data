@@ -267,6 +267,55 @@ Function Join-TotalRow
     }
 }
 
+Function Rename-Property
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true, Position=0, ParameterSetName='Hashtable')] [Hashtable] $Rename,
+        [Parameter(Mandatory=$true, Position=0, ParameterSetName='String')] [string] $From,
+        [Parameter(Mandatory=$true, Position=1, ParameterSetName='String')] [string] $To,
+        [Parameter(ValueFromRemainingArguments = $true, ParameterSetName='String')] [string[]] $OtherFromToPairs
+    )
+    Begin
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+        if ($Rename)
+        {
+            $renameDict = $Rename
+            return
+        }
+        $renameDict = @{$From=$To}
+        if ($OtherFromToPairs)
+        {
+            $actualOtherPairs = $OtherFromToPairs | Where-Object { $_ -ne '+' }
+            if (@($actualOtherPairs).Count % 2 -ne 0) { throw "There must be an event number of additional pairs if provided." }
+            for ($i = 0; $i -lt $actualOtherPairs.Count; $i += 2)
+            {
+                $renameDict[$actualOtherPairs[$i]] = $actualOtherPairs[$i+1]
+            }
+        }
+
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $newObject = New-Object PSObject
+        foreach ($property in $InputObject.PSObject.Properties)
+        {
+            if ($renameDict.Contains($property.Name))
+            {
+                $newObject.PSObject.Properties.Add((New-Object PSNoteProperty $renameDict[$property.Name], $property.Value))
+            }
+            else
+            {
+                $newObject.PSObject.Properties.Add($property)
+            }
+        }
+        $newObject
+    }
+}
+
 Function ConvertTo-Dictionary
 {
     Param
