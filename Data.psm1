@@ -565,6 +565,40 @@ Function Get-Weekday
     }
 }
 
+Function ConvertTo-Object
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0, Mandatory=$true)] [string] $Property,
+        [Parameter()] [switch] $Unique
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[string]
+    }
+    Process
+    {
+        if ($InputObject -is [string])
+        {
+            $stringList = $InputObject -split "[`r`n]"
+            foreach ($string in $stringList)
+            {
+                if (![String]::IsNullOrWhiteSpace($string)) { $inputObjectList.Add($string) }
+            }
+        }
+        else
+        {
+            $inputObjectList.Add($InputObject)
+        }
+    }
+    End
+    {
+        $inputObjectList |
+            Select-Object @{Name=$Property; Expression={$_}} -Unique:$Unique
+    }
+}
+
 Function Assert-Count
 {
     Param

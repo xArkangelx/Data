@@ -101,6 +101,7 @@ FunctionsToExport = @(
     'Get-Sentences',
     'Get-StringHash',
     'Get-Weekday',
+    'ConvertTo-Object',
     'Assert-Count',
     'Compress-PlainText',
     'Expand-PlainText'
