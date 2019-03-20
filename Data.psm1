@@ -30,6 +30,33 @@ namespace Rhodium.Data
 }
 "@
 
+Function Join-GroupCount
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0, Mandatory=$true)] [string[]] $GroupProperty,
+        [Parameter(Position=1)] [string] $CountProperty = 'GroupCount'
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        $groupDict = $inputObjectList | ConvertTo-Dictionary -Ordered -Keys $GroupProperty
+        foreach ($pair in $groupDict.GetEnumerator())
+        {
+            $pair.Value | Set-PropertyValue $CountProperty $pair.Value.Count
+        }
+    }
+}
+
 Function Join-GroupHeaderRow
 {
     Param
