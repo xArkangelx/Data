@@ -105,6 +105,7 @@ FunctionsToExport = @(
     'Set-PropertySplitValue',
     'Get-Sentences',
     'Get-StringHash',
+    'Get-UnindentedText',
     'Get-Weekday',
     'ConvertTo-Object',
     'Assert-Count',

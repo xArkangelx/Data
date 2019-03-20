@@ -718,6 +718,33 @@ Function Get-StringHash
     }
 }
 
+Function Get-UnindentedText
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true, Position=0)] [string[]] $Text
+    )
+    Begin
+    {
+        $lineList = New-Object System.Collections.Generic.List[string]
+    }
+    Process
+    {
+        foreach ($line in $Text) { $lineList.Add($line) }
+    }
+    End
+    {
+        $allText = $lineList -join "`r`n"
+        $regex = [regex]"(?m)^( *)\S"
+        $baseWhitespaceCount = $regex.Matches($allText) |
+            ForEach-Object { $_.Groups[1].Length } |
+            Measure-Object -Minimum |
+            ForEach-Object Minimum
+        if ($baseWhitespaceCount -eq 0) { return $allText }
+        $allText -replace "(?m)^ {$baseWhitespaceCount}"
+    }
+}
+
 Function Get-Weekday
 {
     Param
