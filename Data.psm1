@@ -30,6 +30,200 @@ namespace Rhodium.Data
 }
 "@
 
+Function Group-Denormalized
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0, Mandatory=$true)] [string[]] $GroupProperty,
+        [Parameter()] [switch] $NoCount,
+        [Parameter()] [string[]] $KeepFirst,
+        [Parameter()] [string[]] $KeepLast,
+        [Parameter()] [string[]] $KeepAll,
+        [Parameter()] [string[]] $KeepUnique,
+        [Parameter()] [string[]] $Sum,
+        [Parameter()] [string[]] $Min,
+        [Parameter()] [string[]] $Max,
+        [Parameter()] [string[]] $CountAll,
+        [Parameter()] [string[]] $CountUnique,
+        [Parameter()] [switch] $AllowEmpty,
+        [Parameter()] [string] $JoinWith,
+        [Parameter()] [string] $ToGroupProperty
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        Function SelectLikeAny([string[]]$PropertyList, [string[]]$LikeList, $Dictionary)
+        {
+            foreach ($property in $PropertyList)
+            {
+                foreach ($like in $LikeList)
+                {
+                    if ($property -like $like) { $Dictionary[$property] = $property; continue }
+                }
+            }
+        }
+
+        $keepFirstDict = @{}
+        $keepLastDict = @{}
+        $keepAllDict = @{}
+        $keepUniqueDict = @{}
+        $countAllDict = @{}
+        $countUniqueDict = @{}
+        $sumDict = @{}
+        $minDict = @{}
+        $maxDict = @{}
+
+        $propertyList = $inputObjectList[0].PSObject.Properties.Name
+        SelectLikeAny $propertyList $KeepFirst $keepFirstDict
+        SelectLikeAny $propertyList $KeepLast $keepLastDict
+        SelectLikeAny $propertyList $KeepAll $keepAllDict
+        SelectLikeAny $propertyList $KeepUnique $keepUniqueDict
+        SelectLikeAny $propertyList $Sum $sumDict
+        SelectLikeAny $propertyList $Min $minDict
+        SelectLikeAny $propertyList $Max $maxDict
+        SelectLikeAny $propertyList $CountAll $countAllDict
+        SelectLikeAny $propertyList $CountUnique $countUniqueDict
+
+        if (!$PSBoundParameters['KeepFirst'] -and !$ToGroupProperty)
+        {
+            $usedProperties = & { $GroupProperty; $KeepLast; $KeepAll; $KeepUnique; $CountAll; $CountUnique; $Sum; $Min; $Max }
+            foreach ($property in $propertyList) { if ($property -notin $usedProperties) { $keepFirstDict[$property] = $property } }
+        }
+
+        $propertyLastUsedDict = @{}
+        $propertyNeedsRenameDict = @{}
+        $dictPrefixDict = @{}
+        $dictPrefixDict[$keepFirstDict] = 'First'
+        $dictPrefixDict[$keepLastDict] = 'Last'
+        $dictPrefixDict[$keepAllDict] = 'All'
+        $dictPrefixDict[$keepUniqueDict] = 'Unique'
+        $dictPrefixDict[$sumDict] = 'Sum'
+        $dictPrefixDict[$minDict] = 'Min'
+        $dictPrefixDict[$maxDict] = 'Max'
+
+        foreach ($key in @($countAllDict.Keys)) { $countAllDict[$key] = $key + "CountAll" }
+        foreach ($key in @($countUniqueDict.Keys)) { $countUniqueDict[$key] = $key + "CountUnique" }
+
+        foreach ($dict in $dictPrefixDict.Keys)
+        {
+            foreach ($property in @($dict.Keys))
+            {
+                $propertyNeedsRename = $propertyNeedsRenameDict[$property]
+                if ($propertyNeedsRename -eq $true)
+                {
+                    $lastDict = $propertyLastUsedDict[$property]
+                    $lastDict[$property] = $dictPrefixDict[$lastDict] + $lastDict[$property]
+                    $dict[$property] = $dictPrefixDict[$dict] + $dict[$property]
+                    $propertyNeedsRenameDict[$property] = $false
+                }
+                elseif ($propertyNeedsRename -eq $false)
+                {
+                    $dict[$property] = $dictPrefixDict[$dict] + $dict[$property]
+                }
+                else
+                {
+                    $propertyNeedsRenameDict[$property] = $true
+                    $propertyLastUsedDict[$property] = $dict
+                }
+            }
+        }
+
+        $groupDict = $inputObjectList | ConvertTo-Dictionary -Ordered -Keys $GroupProperty
+        
+        foreach ($group in $groupDict.Values)
+        {
+            $result = [ordered]@{}
+            $firstObject = [Linq.Enumerable]::First($group)
+            $lastObject = [Linq.Enumerable]::Last($group)
+            foreach ($property in $GroupProperty)
+            {
+                $result[$property] = $firstObject.$property
+            }
+            if (!$NoCount) { $result['Count'] = $group.Count }
+            foreach ($property in $propertyList)
+            {
+                if ($keepFirstDict.Contains($property))
+                {
+                    $result[$keepFirstDict[$property]] = $firstObject.$property
+                }
+                if ($keepLastDict.Contains($property))
+                {
+                    $result[$keepLastDict[$property]] = $lastObject.$property
+                }
+                $allList = $uniqueList = $null
+                if ($keepAllDict.Contains($property) -or $countAllDict.Contains($property) -or 
+                    $keepUniqueDict.Contains($property) -or $countUniqueDict.Contains($property)
+                )
+                {
+                    $allList = foreach ($value in $group.$property)
+                    {
+                        if ($AllowEmpty -or ![String]::IsNullOrWhiteSpace($value)) { $value }
+                    }
+                }
+                if ($keepUniqueDict.Contains($property) -or $countUniqueDict.Contains($property))
+                {
+                    $uniqueList = $allList | Select-Object -Unique
+                }
+                if ($keepAllDict.Contains($property))
+                {
+                    $value = $allList
+                    if ($JoinWith) { $value = $value -join $JoinWith }
+                    $result[$keepAllDict[$property]] = $value
+                }
+                if ($keepUniqueDict.Contains($property))
+                {
+                    $value = $uniqueList
+                    if ($JoinWith) { $value = $value -join $JoinWith }
+                    $result[$keepUniqueDict[$property]] = $value
+                }
+                if ($countAllDict.Contains($property))
+                {
+                    $result[$countAllDict[$property]] = @($allList).Count
+                }
+                if ($countUniqueDict.Contains($property))
+                {
+                    $result[$countUniqueDict[$property]] = @($uniqueList).Count
+                }
+                $measureArgs = @{}
+                if ($sumDict.Contains($property)) { $measureArgs.Sum = $true }
+                if ($minDict.Contains($property)) { $measureArgs.Minimum = $true }
+                if ($maxDict.Contains($property)) { $measureArgs.Maximum = $true }
+                if ($measureArgs.Keys.Count)
+                {
+                    $measureResult = $group | Where-Object $property -ne $null | Measure-Object -Property $property @measureArgs
+                    if ($sumDict.Contains($property))
+                    {
+                        $result[$sumDict[$property]] = $measureResult.Sum
+                    }
+                    if ($minDict.Contains($property))
+                    {
+                        $result[$minDict[$property]] = $measureResult.Minimum
+                    }
+                    if ($maxDict.Contains($property))
+                    {
+                        $result[$maxDict[$property]] = $measureResult.Maximum
+                    }
+                }
+            }
+            if ($ToGroupProperty)
+            {
+                $result[$ToGroupProperty] = $group
+            }
+
+            [pscustomobject]$result
+        }
+    }
+}
+
 Function Join-GroupCount
 {
     Param
