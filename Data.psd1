@@ -110,6 +110,7 @@ FunctionsToExport = @(
     'Get-UnindentedText',
     'Get-Weekday',
     'ConvertTo-Object',
+    'Convert-DateTimeZone',
     'Assert-Count',
     'Compress-PlainText',
     'Expand-PlainText'

@@ -579,6 +579,120 @@ Function ConvertTo-Dictionary
     }
 }
 
+Function Convert-DateTimeZone
+{
+    Param
+    (
+        [Parameter(Position=0, Mandatory=$true, ParameterSetName='Value')] [DateTime] $DateTime,
+        [Parameter(ValueFromPipeline=$true, ParameterSetName='Pipeline')] [object] $InputObject,
+        [Parameter(Position=0, Mandatory=$true, ParameterSetName='Pipeline')] [string[]] $DateTimeProperty,
+        [Parameter(ParameterSetName='Pipeline')] [string] $FromTimeZoneProperty,
+        [Parameter()] [string] $FromTimeZone,
+        [Parameter()] [switch] $FromLocal,
+        [Parameter()] [switch] $FromUtc,
+        [Parameter(ParameterSetName='Pipeline')] [string] $ToTimeZoneProperty,
+        [Parameter()] [string] $ToTimeZone,
+        [Parameter()] [switch] $ToLocal,
+        [Parameter()] [switch] $ToUtc
+    )
+    Begin
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+
+        $fromTimeZoneMode = $null
+        $toTimeZoneMode = $null
+        $fromTimeZoneValue = $null
+        $toTimeZoneValue = $null
+
+        $fromCount = 0
+        $toCount = 0
+
+        if ($FromTimeZoneProperty) { $fromCount += 1; $fromTimeZoneMode = 'Property' }
+        if ($FromTimeZone)
+        {
+            $fromCount += 1
+            $fromTimeZoneMode = 'Specified'
+            $fromTimeZoneValue = [System.TimeZoneInfo]::FindSystemTimeZoneById($FromTimeZone)
+        }
+        if ($FromLocal) { $fromCount += 1; $fromTimeZoneMode = 'Local' }
+        if ($FromUtc) { $fromCount += 1; $fromTimeZoneMode = 'Utc' }
+
+        if ($ToTimeZoneProperty) { $toCount += 1; $toTimeZoneMode = 'Property' }
+        if ($ToTimeZone)
+        {
+            $toCount += 1
+            $toTimeZoneMode = 'Specified'
+            $toTimeZoneValue = [System.TimeZoneInfo]::FindSystemTimeZoneById($ToTimeZone)
+        }
+        if ($ToLocal) { $toCount += 1; $toTimeZoneMode = 'Local' }
+        if ($ToUtc) { $toCount += 1; $toTimeZoneMode = 'Utc' }
+
+        if ($fromCount -ne 1) { throw "Exactly one From parameter must be specified." }
+        if ($toCount -ne 1) { throw "Exactly one To parameter must be specified." }
+
+        $dateTimeList = New-Object System.Collections.Generic.List[Nullable[DateTime]]
+        $newDateTimeList = New-Object System.Collections.Generic.List[Nullable[DateTime]]
+
+        if ($PSCmdlet.ParameterSetName -eq 'Value') { $dateArrayLength = 1 }
+        else { $dateArrayLength = $DateTimeProperty.Count }
+
+        $dateArray = [Array]::CreateInstance([Nullable[DateTime]], $dateArrayLength)
+    }
+    Process
+    {
+        if ($PSCmdlet.ParameterSetName -eq 'Value') { $dateArray[0] = $DateTime }
+        else
+        {
+            for ($i = 0; $i -lt $dateArrayLength; $i++)
+            {
+                $value = $InputObject.($DateTimeProperty[$i])
+                try
+                {
+                    $dateArray[$i] = [datetime]$value
+                }
+                catch
+                {
+                    if ($value) { Write-Warning "'$value' could not be converted to a DateTime" }
+                    $dateArray[$i] = $null
+                }
+            }
+        }
+
+        if ($fromTimeZoneMode -eq 'Property')
+        {
+            $fromTimeZoneValue = [System.TimeZoneInfo]::FindSystemTimeZoneById($InputObject.$FromTimeZoneProperty)
+        }
+        if ($toTimeZoneMode -eq 'Property')
+        {
+            $toTimeZoneValue = [System.TimeZoneInfo]::FindSystemTimeZoneById($InputObject.$toTimeZoneProperty)
+        }
+
+        for ($i = 0; $i -lt $dateArrayLength; $i++)
+        {
+            $originalDateTime = $dateArray[$i]
+            if ($originalDateTime -eq $null) { continue }
+
+            if ($fromTimeZoneMode -eq 'Utc') { $dateTimeUtc = $originalDateTime }
+            elseif ($fromTimeZoneMode -eq 'Local') { $dateTimeUtc = $originalDateTime.ToUniversalTime() }
+            else { $dateTimeUtc = [TimeZoneInfo]::ConvertTimeToUtc($originalDateTime, $fromTimeZoneValue) }
+
+            if ($toTimeZoneMode -eq 'Utc') { $dateArray[$i] = $dateTimeUtc }
+            elseif ($toTimeZoneMode -eq 'Local') { $dateArray[$i] = $dateTimeUtc.ToLocalTime() }
+            else { $dateArray[$i] = [TimeZoneInfo]::ConvertTimeFromUtc($dateTimeUtc, $toTimeZoneValue) }
+        }
+
+        if ($PSCmdlet.ParameterSetName -eq 'Value') { return $dateArray[0] }
+
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $DateTimeProperty)
+        for ($i = 0; $i -lt $dateArrayLength; $i++)
+        {
+            $newInputObject.($DateTimeProperty[$i]) = $dateArray[$i]
+        }
+
+        $newInputObject
+    }
+}
+
 Function Select-DuplicatePropertyValue
 {
     Param
