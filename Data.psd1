@@ -111,6 +111,7 @@ FunctionsToExport = @(
     'Get-Weekday',
     'ConvertTo-Object',
     'Convert-DateTimeZone',
+    'Select-UniformProperty',
     'Assert-Count',
     'Compress-PlainText',
     'Expand-PlainText'

@@ -1157,6 +1157,34 @@ Function ConvertTo-Object
     }
 }
 
+Function Select-UniformProperty
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+        $propertyDict = [ordered]@{}
+    }
+    Process
+    {
+        $inputObjectList.Add($InputObject)
+        foreach ($property in $InputObject.PSObject.Properties.Name)
+        {
+            if (!$propertyDict.Contains($property))
+            {
+                $propertyDict[$property] = $true
+            }
+        }
+    }
+    End
+    {
+        $inputObjectList | Select-Object @($propertyDict.Keys)
+    }
+}
+
 Function Assert-Count
 {
     Param
