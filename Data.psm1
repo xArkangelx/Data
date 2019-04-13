@@ -164,7 +164,7 @@ Function Group-Denormalized
                     $keepUniqueDict.Contains($property) -or $countUniqueDict.Contains($property)
                 )
                 {
-                    $allList = foreach ($value in $group.$property)
+                    $allList = foreach ($value in $group.GetEnumerator().$property)
                     {
                         if ($AllowEmpty -or ![String]::IsNullOrWhiteSpace($value)) { $value }
                     }
