@@ -224,6 +224,58 @@ Function Group-Denormalized
     }
 }
 
+Function Group-Pivot
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0, Mandatory=$true)] [string[]] $RowProperty,
+        [Parameter(Position=1, Mandatory=$true)] [string] $ColumnProperty,
+        [Parameter(Position=2, Mandatory=$true)] [string] $ValueProperty
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+        $columnValueDict = [ordered]@{}
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $inputObjectList.Add($InputObject)
+        $columnValueDict[[string]$InputObject.$ColumnProperty] = $true
+    }
+    End
+    {
+        $groupDict = $inputObjectList | ConvertTo-Dictionary -Keys $RowProperty -Ordered
+
+        foreach ($group in $groupDict.Values)
+        {
+            $result = [ordered]@{}
+            $firstObject = $group[0]
+            $columnGroupDict = $group |
+                Where-Object $ColumnProperty -ne $null |
+                ConvertTo-Dictionary -Keys $ColumnProperty -Ordered
+            foreach ($propertyName in $RowProperty)
+            {
+                $result[$propertyName] = $firstObject.$propertyName
+            }
+            foreach ($propertyName in $columnValueDict.Keys)
+            {
+                $valueGroup = $columnGroupDict[$propertyName]
+                if ($valueGroup)
+                {
+                    $result[$propertyName] = $valueGroup[0].$ValueProperty
+                }
+                else
+                {
+                    $result[$propertyName] = $null
+                }
+            }
+            [pscustomobject]$result
+        }
+    }
+}
+
 Function Join-GroupCount
 {
     Param
