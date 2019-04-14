@@ -1007,6 +1007,101 @@ Function Set-PropertyOrder
     }
 }
 
+Function Set-PropertyDateTimeBreakpoint
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true)] [string[]] $Property,
+        [Parameter()] [string[]] $ToNewProperty,
+        [Parameter()] [uint32[]] $Hours,
+        [Parameter()] [uint32[]] $Days,
+        [Parameter()] [uint32[]] $Weeks,
+        [Parameter()] [uint32[]] $Months,
+        [Parameter()] [uint32[]] $Years,
+        [Parameter()] [string] $TeePossibleValues
+    )
+    Begin
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+
+        $breakpointList = New-Object System.Collections.Generic.List[object]
+
+        Function DefineBreakpoint([uint64]$Number, $Type, [uint64]$Multiplier)
+        {
+            $breakpoint = [ordered]@{}
+            $breakpoint.Number = $Number
+            $breakpoint.Type = $Type
+            $breakpoint.Multiplier = $Multiplier
+            $breakpoint.MaxValue = $Number * $Multiplier
+            $breakpoint.Label = $null
+            $breakpoint.SubLabel = "$Number $Type"
+            if ($Number -eq 1) { $breakpoint.SubLabel = $breakpoint.SubLabel.TrimEnd("s") }
+            $breakpointList.Add([pscustomobject]$breakpoint)
+        }
+
+        foreach ($v in $Hours) { DefineBreakpoint $v Hours 3600 }
+        foreach ($v in $Days) { DefineBreakpoint $v Days 86400 }
+        foreach ($v in $Weeks) { DefineBreakpoint $v Weeks 604800 }
+        foreach ($v in $Months) { DefineBreakpoint $v Months 18748800 }
+        foreach ($v in $Years) { DefineBreakpoint $v Years 6843312000 }
+
+        $breakpointList = $breakpointList | Sort-Object MaxValue
+
+        for ($i = 0; $i -lt $breakpointList.Count; $i++)
+        {
+            $breakpoint = $breakpointList[$i]
+            if ($i -eq 0)
+            {
+                $breakpoint.Label = "0 - $($breakpoint.SubLabel)"
+            }
+            else
+            {
+                $breakpoint.Label = "$($lastBreakpoint.SubLabel) - $($breakpoint.SubLabel)"
+            }
+            
+            $lastBreakpoint = $breakpoint
+        }
+
+        $now = [DateTime]::Now
+        
+        $propertyNameList = $Property
+        if ($ToNewProperty) { $propertyNameList = $ToNewProperty }
+
+        if ($ToNewProperty -and $ToNewProperty.Count -ne $Property.Count)
+        {
+            throw "Property and ToNewProperty counts must match."
+        }
+
+        if ($TeePossibleValues)
+        {
+            $valueList = & { $breakpointList.Label; "Over $($breakpoint.SubLabel)" }
+            $PSCmdlet.SessionState.PSVariable.Set($TeePossibleValues, $valueList)
+        }
+    }
+    Process
+    {
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $propertyNameList)
+        for ($i = 0; $i -lt $Property.Count; $i++)
+        {
+            $newPropertyName = $propertyNameList[$i]
+            $value = $newInputObject.($Property[$i])
+            if ($value -is [TimeSpan]) { $seconds = $value.TotalSeconds }
+            else { $seconds = ($now - [datetime]$value).TotalSeconds }
+            foreach ($breakpoint in $breakpointList)
+            {
+                if ($seconds -le $breakpoint.MaxValue)
+                {
+                    $newInputObject.$newPropertyName = $breakpoint.Label
+                    break
+                }
+            }
+            $newInputObject.$newPropertyName = "Over $($breakpoint.SubLabel)"
+        }
+        $newInputObject
+    }
+}
+
 Function Set-PropertyValue
 {
     Param
