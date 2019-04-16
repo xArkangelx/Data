@@ -540,6 +540,33 @@ Function Join-TotalRow
     }
 }
 
+Function Expand-Property
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter()] [string[]] $KeyProperty,
+        [Parameter(Mandatory=$true)] [string] $NameProperty,
+        [Parameter(Mandatory=$true)] [string] $ValueProperty
+    )
+    Process
+    {
+        if (!$InputObject) { return }
+        foreach ($property in $InputObject.PSObject.Properties)
+        {
+            $result = [ordered]@{}
+            foreach ($propertyName in $KeyProperty)
+            {
+                $result[$propertyName] = $InputObject.$propertyName
+            }
+            if ($property.Name -in $KeyProperty) { continue }
+            $result[$NameProperty] = $property.Name
+            $result[$ValueProperty] = $property.Value
+            [pscustomobject]$result
+        }
+    }
+}
+
 Function Rename-Property
 {
     Param
