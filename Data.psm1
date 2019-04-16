@@ -1193,6 +1193,33 @@ Function Set-PropertySplitValue
     }
 }
 
+Function Get-FormattedXml
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true, Position=0)] [string[]] $XmlText
+    )
+
+    Begin
+    {
+        $textList = New-Object System.Collections.ArrayList
+    }
+    Process
+    {
+        [void]$textList.Add($XmlText -join "")
+    }
+    End
+    {
+        $xmlDoc = New-Object System.Xml.XmlDataDocument
+        $xmlDoc.LoadXml($textList -join "")
+        $stringWriter = New-Object System.Io.Stringwriter
+        $xmlWriter = New-Object System.Xml.XmlTextWriter $stringWriter
+        $xmlWriter.Formatting = [System.Xml.Formatting]::Indented
+        $xmlDoc.WriteContentTo($xmlWriter)
+        $stringWriter.ToString()
+    }
+}
+
 Function Get-Sentences
 {
     Param

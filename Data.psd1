@@ -108,6 +108,7 @@ FunctionsToExport = @(
     'Set-PropertyValue',
     'Set-PropertyJoinValue',
     'Set-PropertySplitValue',
+    'Get-FormattedXml',
     'Get-Sentences',
     'Get-StringHash',
     'Get-UnindentedText',
