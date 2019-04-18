@@ -1107,6 +1107,7 @@ Function Set-PropertyDateTimeBreakpoint
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true)] [string[]] $Property,
         [Parameter()] [string[]] $ToNewProperty,
+        [Parameter()] [uint32[]] $Minutes,
         [Parameter()] [uint32[]] $Hours,
         [Parameter()] [uint32[]] $Days,
         [Parameter()] [uint32[]] $Weeks,
@@ -1133,11 +1134,12 @@ Function Set-PropertyDateTimeBreakpoint
             $breakpointList.Add([pscustomobject]$breakpoint)
         }
 
+        foreach ($v in $Minutes) { DefineBreakpoint $v Minutes 60 }
         foreach ($v in $Hours) { DefineBreakpoint $v Hours 3600 }
         foreach ($v in $Days) { DefineBreakpoint $v Days 86400 }
         foreach ($v in $Weeks) { DefineBreakpoint $v Weeks 604800 }
-        foreach ($v in $Months) { DefineBreakpoint $v Months 18748800 }
-        foreach ($v in $Years) { DefineBreakpoint $v Years 6843312000 }
+        foreach ($v in $Months) { DefineBreakpoint $v Months 2678400 }
+        foreach ($v in $Years) { DefineBreakpoint $v Years 31536000 }
 
         $breakpointList = $breakpointList | Sort-Object MaxValue
 
@@ -1152,7 +1154,6 @@ Function Set-PropertyDateTimeBreakpoint
             {
                 $breakpoint.Label = "$($lastBreakpoint.SubLabel) - $($breakpoint.SubLabel)"
             }
-            
             $lastBreakpoint = $breakpoint
         }
 
@@ -1181,15 +1182,20 @@ Function Set-PropertyDateTimeBreakpoint
             $value = $newInputObject.($Property[$i])
             if ($value -is [TimeSpan]) { $seconds = $value.TotalSeconds }
             else { $seconds = ($now - [datetime]$value).TotalSeconds }
+            $found = $false
             foreach ($breakpoint in $breakpointList)
             {
                 if ($seconds -le $breakpoint.MaxValue)
                 {
                     $newInputObject.$newPropertyName = $breakpoint.Label
+                    $found = $true
                     break
                 }
             }
-            $newInputObject.$newPropertyName = "Over $($breakpoint.SubLabel)"
+            if (!$found)
+            {
+                $newInputObject.$newPropertyName = "Over $($breakpoint.SubLabel)"
+            }
         }
         $newInputObject
     }
