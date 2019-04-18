@@ -1424,6 +1424,49 @@ Function ConvertTo-Object
     }
 }
 
+
+Function Sort-ByPropertyValue
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0)] [string] $Property,
+        [Parameter(Position=1)] [string[]] $Begin,
+        [Parameter()] [string[]] $End
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        $sortDict = @{}
+        $i = 1
+        foreach ($value in $Begin)
+        {
+            $sortDict[$value] = $i
+            $i += 1
+        }
+        $i = [int32]::MaxValue
+        foreach ($value in $End)
+        {
+            $sortDict[$value] = $i
+            $i -= 1
+        }
+        $mid = [int]([int]::MaxValue / 2)
+        
+        $inputObjectList |
+            Group-Denormalized $Property -ToGroupProperty "${Property}Group" -NoCount |
+            Sort-Object { if ($sortDict.Contains($_.$Property)) { $sortDict[$_.$Property] } else { $mid } } |
+            ForEach-Object "${Property}Group"
+    }
+}
+
 Function Select-UniformProperty
 {
     Param
