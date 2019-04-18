@@ -1034,6 +1034,72 @@ Function Set-PropertyOrder
     }
 }
 
+Function Set-PropertyDateFloor
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true)] [string[]] $Property,
+        [Parameter()] [string[]] $ToNewProperty,
+        [Parameter(ParameterSetName='Second')] [int] $Second,
+        [Parameter(ParameterSetName='Minute')] [int] $Minute,
+        [Parameter(ParameterSetName='Hour')] [int] $Hour,
+        [Parameter(ParameterSetName='Day')] [switch] $Day,
+        [Parameter(ParameterSetName='Month')] [switch] $Month
+    )
+    Begin
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+        if ($ToNewProperty -and $ToNewProperty.Count -ne $Property.Count)
+        {
+            throw "Property and ToNewProperty counts must match."
+        }
+
+        $newPropertyList = $Property
+        if ($ToNewProperty) { $newPropertyList = $ToNewProperty }
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $newPropertyList)
+        $newValue = $null
+
+        for ($i = 0; $i -lt $Property.Count; $i++)
+        {
+            $propertyName = $Property[$i]
+            $newPropertyName = $newPropertyList[$i]
+            $value = $InputObject.$propertyName
+            try { $value = [datetime]$value } catch { continue }
+            if ($PSCmdlet.ParameterSetName -eq 'Second')
+            {
+                $seconds = [Math]::Floor($value.Second / [double]$Second) * $Second
+                $newValue = $value.Date.AddHours($value.Hour).AddMinutes($value.Minute).AddSeconds($seconds)
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'Minute')
+            {
+                $minutes = [Math]::Floor($value.Minute / [double]$Minute) * $Minute
+                $newValue = $value.Date.AddHours($value.Hour).AddMinutes($minutes)
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'Hour')
+            {
+                $hours = [Math]::Floor($value.Hour / [double]$Hour) * $Hour
+                $newValue = $value.Date.AddHours($hours)
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'Day')
+            {
+                $newValue = $value.Date
+            }
+            elseif ($PSCmdlet.ParameterSetName -eq 'Month')
+            {
+                $newValue = $value.Date.AddDays(-1*$value.Day + 1)
+            }
+            $newInputObject.$newPropertyName = $newValue
+        }
+
+        $newInputObject
+    }
+}
+
 Function Set-PropertyDateTimeBreakpoint
 {
     Param

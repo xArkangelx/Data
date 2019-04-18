@@ -104,6 +104,7 @@ FunctionsToExport = @(
     'Invoke-PipelineThreading',
     'Write-PipelineProgress',
     'Set-PropertyOrder',
+    'Set-PropertyDateFloor',
     'Set-PropertyDateTimeBreakpoint',
     'Set-PropertyValue',
     'Set-PropertyJoinValue',
