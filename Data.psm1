@@ -419,8 +419,8 @@ Function Join-List
                 if ($newObject.Contains($property.Name) -and (!$OverwriteAll -or
                     ([String]::IsNullOrWhiteSpace($newObject[$property.Name] -and !$OverwriteNull)))) { continue }
                 $newObject[$property.Name] = $property.Value
-                [pscustomobject]$newObject
             }
+            [pscustomobject]$newObject
             if ($FirstRightOnly) { break }
         }
     }
