@@ -44,6 +44,7 @@ Function Group-Denormalized
         [Parameter()] [string[]] $Sum,
         [Parameter()] [string[]] $Min,
         [Parameter()] [string[]] $Max,
+        [Parameter()] [string[]] $Avg,
         [Parameter()] [string[]] $CountAll,
         [Parameter()] [string[]] $CountUnique,
         [Parameter()] [switch] $AllowEmpty,
@@ -81,6 +82,7 @@ Function Group-Denormalized
         $sumDict = @{}
         $minDict = @{}
         $maxDict = @{}
+        $avgDict = @{}
 
         $propertyList = $inputObjectList[0].PSObject.Properties.Name
         SelectLikeAny $propertyList $KeepFirst $keepFirstDict
@@ -90,6 +92,7 @@ Function Group-Denormalized
         SelectLikeAny $propertyList $Sum $sumDict
         SelectLikeAny $propertyList $Min $minDict
         SelectLikeAny $propertyList $Max $maxDict
+        SelectLikeAny $propertyList $Avg $avgDict
         SelectLikeAny $propertyList $CountAll $countAllDict
         SelectLikeAny $propertyList $CountUnique $countUniqueDict
 
@@ -103,6 +106,7 @@ Function Group-Denormalized
         $dictPrefixDict[$sumDict] = 'Sum'
         $dictPrefixDict[$minDict] = 'Min'
         $dictPrefixDict[$maxDict] = 'Max'
+        $dictPrefixDict[$avgDict] = 'Avg'
 
         foreach ($key in @($countAllDict.Keys)) { $countAllDict[$key] = $key + "CountAll" }
         foreach ($key in @($countUniqueDict.Keys)) { $countUniqueDict[$key] = $key + "CountUnique" }
@@ -191,6 +195,7 @@ Function Group-Denormalized
                 if ($sumDict.Contains($property)) { $measureArgs.Sum = $true }
                 if ($minDict.Contains($property)) { $measureArgs.Minimum = $true }
                 if ($maxDict.Contains($property)) { $measureArgs.Maximum = $true }
+                if ($avgDict.Contains($property)) { $measureArgs.Average = $true }
                 if ($measureArgs.Keys.Count)
                 {
                     $measureResult = $group | Where-Object $property -ne $null | Measure-Object -Property $property @measureArgs
@@ -205,6 +210,10 @@ Function Group-Denormalized
                     if ($maxDict.Contains($property))
                     {
                         $result[$maxDict[$property]] = $measureResult.Maximum
+                    }
+                    if ($avgDict.Contains($property))
+                    {
+                        $result[$avgDict[$property]] = $measureResult.Average
                     }
                 }
             }
