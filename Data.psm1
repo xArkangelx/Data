@@ -232,9 +232,11 @@ Function Group-Pivot
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
-        [Parameter(Position=0, Mandatory=$true)] [string[]] $RowProperty,
+        [Parameter(Position=0, Mandatory=$true)] [string[]] $GroupProperty,
         [Parameter(Position=1, Mandatory=$true)] [string] $ColumnProperty,
-        [Parameter(Position=2, Mandatory=$true)] [string] $ValueProperty
+        [Parameter(Position=2, Mandatory=$true)] [string] $ValueProperty,
+        [Parameter()] [string[]] $KeepFirst,
+        [Parameter()] [switch] $NoCount
     )
     Begin
     {
@@ -249,7 +251,7 @@ Function Group-Pivot
     }
     End
     {
-        $groupDict = $inputObjectList | ConvertTo-Dictionary -Keys $RowProperty -Ordered
+        $groupDict = $inputObjectList | ConvertTo-Dictionary -Keys $GroupProperty -Ordered
 
         foreach ($group in $groupDict.Values)
         {
@@ -258,9 +260,14 @@ Function Group-Pivot
             $columnGroupDict = $group |
                 Where-Object $ColumnProperty -ne $null |
                 ConvertTo-Dictionary -Keys $ColumnProperty -Ordered
-            foreach ($propertyName in $RowProperty)
+            foreach ($propertyName in $GroupProperty)
             {
                 $result[$propertyName] = $firstObject.$propertyName
+            }
+            if (!$NoCount) { $result['Count'] = $group.Count }
+            foreach ($property in $KeepFirst)
+            {
+                $result[$property] = $firstObject.$property
             }
             foreach ($propertyName in $columnValueDict.Keys)
             {
