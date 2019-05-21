@@ -1276,15 +1276,31 @@ Function Set-PropertyType
 
 Function Set-PropertyValue
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
-        [Parameter(Position=1)] [object] $Value
+        [Parameter(Position=1)] [object] $Value,
+        [Parameter()] [object] $Where,
+        [Parameter()] [switch] $IfUnset
     )
     Process
     {
         $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
+        $setValue = $true
+        if ($Where -is [scriptblock])
+        {
+            $varList = New-Object System.Collections.Generic.List[PSVariable]
+            $varList.Add((New-Object PSVariable "_", $InputObject))
+            $whereResult = $Where.InvokeWithContext($null, $varList, $null)
+            $setValue = [System.Management.Automation.LanguagePrimitives]::IsTrue($whereResult)
+        }
+        elseif (![String]::IsNullOrWhiteSpace($Where))
+        {
+            $setValue = [System.Management.Automation.LanguagePrimitives]::IsTrue($newInputObject.$Where)
+        }
+        if (!$setValue) { return $newInputObject }
         $newValue = $Value
         if ($Value -is [ScriptBlock])
         {
@@ -1294,7 +1310,10 @@ Function Set-PropertyValue
         }
         foreach ($prop in $Property)
         {
-            $newInputObject.$prop = $newValue
+            if (!$IfUnset.IsPresent -or [String]::IsNullOrWhiteSpace($newInputObject.$prop))
+            {
+                $newInputObject.$prop = $newValue
+            }
         }
         $newInputObject
     }
