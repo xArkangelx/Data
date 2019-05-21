@@ -550,6 +550,33 @@ Function Join-TotalRow
     }
 }
 
+Function Expand-Normalized
+{
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0, Mandatory=$true)] [string] $Property,
+        [Parameter()] [string] $SplitOn
+    )
+    Process
+    {
+        $valueList = $InputObject.$Property
+        if ($SplitOn) { $valueList = $valueList -split $SplitOn }
+        foreach ($value in $valueList)
+        {
+            $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
+            $newInputObject.$Property = $value
+            $newInputObject
+            $returned = $true
+        }
+        if (!$returned)
+        {
+            [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
+        }
+    }
+}
+
 Function Expand-Property
 {
     Param
