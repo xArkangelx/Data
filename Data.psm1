@@ -93,12 +93,6 @@ Function Group-Denormalized
         SelectLikeAny $propertyList $CountAll $countAllDict
         SelectLikeAny $propertyList $CountUnique $countUniqueDict
 
-        if (!$PSBoundParameters['KeepFirst'] -and !$ToGroupProperty)
-        {
-            $usedProperties = & { $GroupProperty; $KeepLast; $KeepAll; $KeepUnique; $CountAll; $CountUnique; $Sum; $Min; $Max }
-            foreach ($property in $propertyList) { if ($property -notin $usedProperties) { $keepFirstDict[$property] = $property } }
-        }
-
         $propertyLastUsedDict = @{}
         $propertyNeedsRenameDict = @{}
         $dictPrefixDict = @{}
