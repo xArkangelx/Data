@@ -683,7 +683,7 @@ Function ConvertTo-Dictionary
         }
         else
         {
-            if (!$dict.Contains($keyValue))
+            if ($dict.Contains($keyValue))
             {
                 $dict[$keyValue] = New-Object System.Collections.Generic.List[object]
             }
