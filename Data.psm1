@@ -579,12 +579,13 @@ Function Expand-Normalized
 
 Function Expand-Property
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter()] [string[]] $KeyProperty,
-        [Parameter(Mandatory=$true)] [string] $NameProperty,
-        [Parameter(Mandatory=$true)] [string] $ValueProperty
+        [Parameter(Position=0)] [string] $NameProperty = 'Name',
+        [Parameter(Position=1)] [string] $ValueProperty = 'Value'
     )
     Process
     {
