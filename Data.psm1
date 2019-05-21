@@ -455,7 +455,7 @@ Function Join-List
                 foreach ($joinProperty in $joinObjectCopy.PSObject.Properties)
                 {
                     if ($joinProperty.Name -in $JoinKeys) { continue }
-                    if ($PSBoundParameters.Contains('KeepProperty') -and $property.Name -notin $KeepProperty) { continue }
+                    if ($PSBoundParameters.ContainsKey('KeepProperty') -and $property.Name -notin $KeepProperty) { continue }
                     $newObject[$joinProperty.Name] = $joinProperty.Value
                 }
                 [pscustomobject]$newObject
