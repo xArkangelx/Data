@@ -107,6 +107,7 @@ FunctionsToExport = @(
     'Set-PropertyOrder',
     'Set-PropertyDateFloor',
     'Set-PropertyDateTimeBreakpoint',
+    'Set-PropertyType',
     'Set-PropertyValue',
     'Set-PropertyJoinValue',
     'Set-PropertySplitValue',

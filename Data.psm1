@@ -1239,6 +1239,41 @@ Function Set-PropertyDateTimeBreakpoint
     }
 }
 
+Function Set-PropertyType
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
+        [Parameter(Mandatory=$true, Position=1)] [ValidateSet('DateTime', 'String', 'Int')] [string] $Type
+    )
+    Begin
+    {
+        $as = switch ($Type)
+        {
+            'String' { [string] }
+            'DateTime' { [DateTime] }
+            'Int' { [int] }
+        }
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
+        foreach ($propertyName in $Property)
+        {
+            $oldValue = $newInputObject.$propertyName
+            $newValue = $null
+            if (![String]::IsNullOrWhiteSpace($oldValue))
+            {
+                $newValue = $oldValue -as $as
+            }
+            $newInputObject.$propertyName = $newValue
+        }
+        $newInputObject
+    }
+}
+
 Function Set-PropertyValue
 {
     Param
