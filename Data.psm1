@@ -674,7 +674,7 @@ Function ConvertTo-Dictionary
         $keyValue = $(foreach ($key in $Keys) { $InputObject.$key }) -join $KeyJoin
         if ($Value)
         {
-            if (!$dict.Contains($keyValue))
+            if ($dict.Contains($keyValue))
             {
                 Write-Warning "Dictionary already contains key '$keyValue'."
                 return
@@ -683,7 +683,7 @@ Function ConvertTo-Dictionary
         }
         else
         {
-            if ($dict.Contains($keyValue))
+            if (!$dict.Contains($keyValue))
             {
                 $dict[$keyValue] = New-Object System.Collections.Generic.List[object]
             }
