@@ -54,8 +54,8 @@ Describe "Join-List" {
 
         It 'Works with -KeepProperty and a null key' {
             $resultList = $groupList | Join-List NotAMatch $clusterList ClusterId -KeepProperty ClusterName
-            $found = @($resultList[0].ClusterType) -eq 'ClusterType'
-            $found | Should Be $null
+            @($resultList[0].PSObject.Properties.Name) -eq 'ClusterName' | Should Not Be $null
+            @($resultList[0].PSObject.Properties.Name) -eq 'ClusterType' | Should Be $null
         }
     }
 }
