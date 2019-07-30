@@ -1247,7 +1247,7 @@ Function Set-PropertyType
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
-        [Parameter(Mandatory=$true, Position=1)] [ValidateSet('DateTime', 'String', 'Int')] [string] $Type
+        [Parameter(Mandatory=$true, Position=1)] [ValidateSet('DateTime', 'String', 'Int', 'Double')] [string] $Type
     )
     Begin
     {
@@ -1256,6 +1256,7 @@ Function Set-PropertyType
             'String' { [string] }
             'DateTime' { [DateTime] }
             'Int' { [int] }
+            'Double' { [double] }
         }
     }
     Process
