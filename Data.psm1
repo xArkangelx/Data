@@ -1301,7 +1301,7 @@ Function Set-PropertyValue
         }
         elseif (![String]::IsNullOrWhiteSpace($Where))
         {
-            $setValue = [System.Management.Automation.LanguagePrimitives]::IsTrue($newInputObject.$Where)
+            $setValue = [System.Management.Automation.LanguagePrimitives]::IsTrue($newInputObject."$Where")
         }
         if (!$setValue) { return $newInputObject }
         $newValue = $Value
