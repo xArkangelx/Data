@@ -1677,3 +1677,27 @@ Function Expand-PlainText
         [System.Text.Encoding]::UTF8.GetString($outputStream.ToArray())
     }
 }
+
+try
+{
+    $date = [System.IO.File]::GetLastWriteTime("$PSScriptRoot\DataSharp\Helpers.cs").ToString("yyyyMMdd_HHmmss")
+    $outputPath = "$Env:LOCALAPPDATA\Rhodium\Module\DataSharp_$date\DataSharp.dll"
+    if (![System.IO.File]::Exists($outputPath))
+    {
+        [void][System.IO.Directory]::CreateDirectory("$Env:LOCALAPPDATA\Rhodium")
+        [void][System.IO.Directory]::CreateDirectory("$Env:LOCALAPPDATA\Rhodium\Module")
+        [void][System.IO.Directory]::CreateDirectory("$Env:LOCALAPPDATA\Rhodium\Module\DataSharp_$date")
+        $fileList = [System.IO.Directory]::GetFiles("$PSScriptRoot\DataSharp", "*.cs")
+        Add-Type -Path $fileList -OutputAssembly $outputPath -OutputType Library
+    }
+
+    if (!$Global:191cf922f94e46709f6b1818ae32f66b_ForceLoadPowerShellCmdlets)
+    {
+        Remove-Item Function:\Rename-Property
+        Import-Module $outputPath -Scope Global
+    }
+}
+catch
+{
+    Write-Warning "Unable to compile C# cmdlets; falling back to regular cmdlets."
+}
