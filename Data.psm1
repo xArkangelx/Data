@@ -1313,7 +1313,7 @@ Function Set-PropertyValue
         }
         foreach ($prop in $Property)
         {
-            if (!$IfUnset.IsPresent -or [String]::IsNullOrWhiteSpace($newInputObject.$prop))
+            if (!$IfUnset -or [String]::IsNullOrWhiteSpace($newInputObject.$prop))
             {
                 $newInputObject.$prop = $newValue
             }
