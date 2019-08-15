@@ -26,6 +26,16 @@ namespace Rhodium.Data
             }
             return newObject;
         }
+
+        public static PSObject EnsureHasProperties(PSObject BaseObject, string[] AddProperties)
+        {
+            foreach (string propertyName in AddProperties)
+            {
+                if (BaseObject.Properties[propertyName] == null)
+                    BaseObject.Properties.Add(new PSNoteProperty(propertyName, null));
+            }
+            return BaseObject;
+        }
     }
 }
 "@
@@ -1286,11 +1296,13 @@ Function Set-PropertyValue
         [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
         [Parameter(Position=1)] [object] $Value,
         [Parameter()] [object] $Where,
-        [Parameter()] [switch] $IfUnset
+        [Parameter()] [switch] $IfUnset,
+        [Parameter()] [switch] $NoClone
     )
     Process
     {
-        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
+        if ($NoClone) { $newInputObject = [Rhodium.Data.DataHelpers]::EnsureHasProperties($InputObject, $Property) }
+        else { $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property) }
         $setValue = $true
         if ($Where -is [scriptblock])
         {
