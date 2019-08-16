@@ -126,7 +126,9 @@ FunctionsToExport = @(
 )
 
 # Cmdlets to export from this module
-CmdletsToExport = @()
+CmdletsToExport = @(
+    'Rename-Property'
+)
 
 # Variables to export from this module
 VariablesToExport = @()
