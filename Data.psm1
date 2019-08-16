@@ -1304,12 +1304,15 @@ Function Set-PropertyValue
         if ($NoClone) { $newInputObject = [Rhodium.Data.DataHelpers]::EnsureHasProperties($InputObject, $Property) }
         else { $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property) }
         $setValue = $true
+        $matchValue = $null
         if ($Where -is [scriptblock])
         {
             $varList = New-Object System.Collections.Generic.List[PSVariable]
             $varList.Add((New-Object PSVariable "_", $InputObject))
+            $varList.Add((New-Object PSVariable "Matches", $Matches))
             $whereResult = $Where.InvokeWithContext($null, $varList, $null)
             $setValue = [System.Management.Automation.LanguagePrimitives]::IsTrue($whereResult)
+            $matchValue = $varList[0].Value
         }
         elseif (![String]::IsNullOrWhiteSpace($Where))
         {
@@ -1321,6 +1324,7 @@ Function Set-PropertyValue
         {
             $varList = New-Object System.Collections.Generic.List[PSVariable]
             $varList.Add((New-Object PSVariable "_", $InputObject))
+            $varList.Add((New-Object PSVariable "Matches", $matchValue))
             $newValue = foreach ($item in $Value.InvokeWithContext($null, $varList, $null)) { $item }
         }
         foreach ($prop in $Property)

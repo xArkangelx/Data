@@ -61,7 +61,7 @@
                     Should Be 0
             }
 
-            It "-Property -Value -Where" {
+            It "-Property -Value -Where [string]" {
                 [pscustomobject]@{A=1} |
                     Set-PropertyValue B 2 -Where A |
                     ForEach-Object B |
@@ -86,6 +86,38 @@
                     Set-PropertyValue B 2 -Where A |
                     ForEach-Object B |
                     Should Be 2
+            }
+
+            It "-Property -Value -Where [string] (Preserves Old)" {
+
+                [pscustomobject]@{A=$null; B='old'} |
+                    Set-PropertyValue B 2 -Where A |
+                    ForEach-Object B |
+                    Should Be 'old'
+            }
+
+            It "-Property -Value -Where [scriptblock]" {
+                [pscustomobject]@{A=1} |
+                    Set-PropertyValue B 2 -Where { $_.A } |
+                    ForEach-Object B |
+                    Should Be 2
+
+                [pscustomobject]@{A=0} |
+                    Set-PropertyValue B 2 -Where { $_.A } |
+                    ForEach-Object B |
+                    Should Be $null
+            }
+
+            It "-Property -Value [scriptblock] -Where [scriptblock] (Match)" {
+                [pscustomobject]@{A="abc123def"} |
+                    Set-PropertyValue B { $Matches[1] } -Where { $_.A -match "(\d+)" } |
+                    ForEach-Object B |
+                    Should Be 123
+
+                [pscustomobject]@{A="abc123def"} |
+                    Set-PropertyValue B { $Matches[1] } -Where { $_.A -match "xyz" } |
+                    ForEach-Object B |
+                    Should Be $null
             }
         }
     }
