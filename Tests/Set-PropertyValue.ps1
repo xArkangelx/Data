@@ -39,7 +39,7 @@
                     Should Be 6
             }
 
-            It "-Property -Value -IfUnset" {
+            It "-Property -Value -IfUnset (When Unset)" {
                 [pscustomobject]@{A=$null} |
                     Set-PropertyValue A 1 -IfUnset |
                     ForEach-Object A |
@@ -54,6 +54,13 @@
                     Set-PropertyValue A 1 -IfUnset |
                     ForEach-Object A |
                     Should Be 1
+            }
+
+            It "-Property -Value -IfUnset (When Set)" {
+                [pscustomobject]@{A=3} |
+                    Set-PropertyValue A 1 -IfUnset |
+                    ForEach-Object A |
+                    Should Be 3
 
                 [pscustomobject]@{A=0} |
                     Set-PropertyValue A 1 -IfUnset |
