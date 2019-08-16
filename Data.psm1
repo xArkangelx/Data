@@ -1313,6 +1313,7 @@ Function Set-PropertyType
     }
 }
 
+if (!$Script:LoadedDataSharp) {
 Function Set-PropertyValue
 {
     [CmdletBinding(PositionalBinding=$false)]
@@ -1361,6 +1362,7 @@ Function Set-PropertyValue
         }
         $newInputObject
     }
+}
 }
 
 Function Set-PropertyJoinValue

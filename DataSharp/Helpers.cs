@@ -43,5 +43,13 @@ namespace DataSharp
             }
             return BaseObject;
         }
+
+        public static bool IsPropertyNullOrWhiteSpace(PSObject Object, string Property)
+        {
+            var property = Object.Properties[Property];
+            if (property == null || property.Value == null)
+                return true;
+            return String.IsNullOrWhiteSpace(property.Value.ToString());
+        }
     }
 }
