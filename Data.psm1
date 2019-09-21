@@ -593,7 +593,8 @@ Function Expand-Normalized
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Position=0, Mandatory=$true)] [string] $Property,
-        [Parameter()] [string] $SplitOn
+        [Parameter()] [string] $SplitOn,
+        [Parameter()] [switch] $IsObject
     )
     Process
     {
@@ -601,8 +602,20 @@ Function Expand-Normalized
         if ($SplitOn) { $valueList = $valueList -split $SplitOn }
         foreach ($value in $valueList)
         {
-            $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
-            $newInputObject.$Property = $value
+            if ($IsObject)
+            {
+                $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
+                foreach ($psProperty in $value.PSObject.Properties)
+                {
+                    $newInputObject.PSObject.Properties.Add($psProperty)
+                }
+                $newInputObject.PSObject.Properties.Remove($Property)
+            }
+            else
+            {
+                $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
+                $newInputObject.$Property = $value
+            }
             $newInputObject
             $returned = $true
         }
