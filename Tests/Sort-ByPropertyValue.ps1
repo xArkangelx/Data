@@ -10,5 +10,13 @@ Describe "Sort-ByPropertyValue" {
             $sortedList[1].Name | Should Be "SysMain"
             $sortedList[$sortedList.Count - 1].Name | Should Be Themes
         }
+
+        It 'Preserves Previous Order' {
+            $values = 'X', 'A', 'Y', 'Z', 'C', 'B' |
+                ForEach-Object { [pscustomobject]@{Value=$_} } |
+                Sort-ByPropertyValue Value -Begin Z -End A
+
+            $values.Value -join '' | Should Be ZXYCBA
+        }
     }
 }
