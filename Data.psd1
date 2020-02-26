@@ -93,6 +93,7 @@ FunctionsToExport = @(
     'Join-GroupHeaderRow',
     'Join-List',
     'Join-Index',
+    'Join-MissingSetCounts',
     'Join-Percentage',
     'Join-TotalRow',
     'Expand-Normalized',

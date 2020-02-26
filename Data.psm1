@@ -522,6 +522,74 @@ Function Join-Index
     }
 }
 
+Function Join-MissingSetCounts
+{
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0,Mandatory=$true)] [string] $Set1Property,
+        [Parameter(Position=1,Mandatory=$true)] [string[]] $Set1Values,
+        [Parameter()] [ValidateSet('SortAndInsert', 'SortAndFilter')] [string] $Mode = 'SortAndInsert',
+        [Parameter()] [string] $Set2Property,
+        [Parameter()] [string[]] $Set2Values,
+        [Parameter()] [string] $CountProperty = 'Count',
+        [Parameter()] [string] $PercentageProperty,
+        [Parameter()] [string] $KeyJoin = '|'
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+        if ($Set2Property -or $Set2Values -and (-not $Set2Property -or -not $Set2Values))
+        {
+            throw "Set2Property and Set2Values must be specified together."
+        }
+
+        $dictionary = if ($Set2Property) { $inputObjectList | ConvertTo-Dictionary $Set1Property, $Set2Property -KeyJoin $KeyJoin }
+        else { $inputObjectList | ConvertTo-Dictionary $Set1Property }
+
+        $propertyList = if ($inputObjectList.Count) { $inputObjectList[0].PSObject.Properties.Name }
+        if (!$propertyList) { $propertyList = @($Set1Property; $Set2Property; $CountProperty; $PercentageProperty) | Where-Object Length }
+
+        $template = [ordered]@{}
+        foreach ($property in $propertyList) { $template.$property = $null }
+
+        if ($Mode -eq 'SortAndInsert') { $Set1Values = @($Set1Values; $inputObjectList | Select-Object -ExpandProperty $Set1Property) | Select-Object -Unique }
+        if ($Mode -eq 'SortAndInsert' -and $Set2Values) { $Set2Values = @($Set2Values; $inputObjectList | Select-Object -ExpandProperty $Set2Property) | Select-Object -Unique }
+
+        if (!$Set2Property) { $Set2Values = '' }
+
+        $usedKeyDict = @{}
+        foreach ($set1Value in $Set1Values)
+        {
+            foreach ($set2Value in $Set2Values)
+            {
+                if (!$Set2Property) { $set2Value = @() }
+                $key = @($set1Value; $set2Value) -join $KeyJoin
+                $usedKeyDict[$key] = $true
+                $existingObject = $dictionary[$key]
+                if ($existingObject) { $existingObject; continue }
+
+                $result = [pscustomobject]$template
+                $result.$Set1Property = $set1Value
+                if ($Set2Property) { $result.$Set2Property = $set2Value }
+                $result.$CountProperty = 0
+                try { $result.$PercentageProperty = "0%" } catch { }
+                $result
+            }
+        }
+    }
+}
+
 Function Join-Percentage
 {
     Param
