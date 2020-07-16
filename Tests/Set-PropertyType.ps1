@@ -54,5 +54,11 @@ Describe "Set-PropertyType" {
                 Set-PropertyType Value DateTime -ErrorAction Ignore
             'OK' | Should Be 'OK'
         }
+
+        It 'Works with DateTime::ParseExact' {
+            $result = [pscustomobject]@{Value="201101-120156"} |
+                Set-PropertyType Value DateTime -ParseExact 'yyMMdd-mmHHss'
+            $result.Value | Should Be ([datetime]"2020-11-01 01:12:56")
+        }
     }
 }

@@ -1365,7 +1365,8 @@ Function Set-PropertyType
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
-        [Parameter(Mandatory=$true, Position=1)] [ValidateSet('DateTime', 'String', 'Int', 'Double')] [string] $Type
+        [Parameter(Mandatory=$true, Position=1)] [ValidateSet('DateTime', 'String', 'Int', 'Double')] [string] $Type,
+        [Parameter()] [string] $ParseExact
     )
     Begin
     {
@@ -1388,7 +1389,14 @@ Function Set-PropertyType
             if (![String]::IsNullOrWhiteSpace($oldValue))
             {
                 trap { $PSCmdlet.WriteError($_); continue }
-                $newValue = $oldValue -as $as
+                if ($ParseExact)
+                {
+                    $newValue = $as::ParseExact($oldValue, $ParseExact, $null)
+                }
+                else
+                {
+                    $newValue = $oldValue -as $as
+                }
                 if ($newValue -eq $null) { throw "'$oldValue' cant't be converted to $Type." }
             }
             $newInputObject.$propertyName = $newValue
