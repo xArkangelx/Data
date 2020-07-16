@@ -1193,10 +1193,11 @@ Function Set-PropertyOrder
 
 Function Set-PropertyDateFloor
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
-        [Parameter(Mandatory=$true)] [string[]] $Property,
+        [Parameter(Mandatory=$true,Position=0)] [string[]] $Property,
         [Parameter()] [string[]] $ToNewProperty,
         [Parameter(ParameterSetName='Second')] [int] $Second,
         [Parameter(ParameterSetName='Minute')] [int] $Minute,
