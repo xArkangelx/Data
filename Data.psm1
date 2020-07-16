@@ -1387,7 +1387,9 @@ Function Set-PropertyType
             $newValue = $null
             if (![String]::IsNullOrWhiteSpace($oldValue))
             {
+                trap { $PSCmdlet.WriteError($_); continue }
                 $newValue = $oldValue -as $as
+                if ($newValue -eq $null) { throw "'$oldValue' cant't be converted to $Type." }
             }
             $newInputObject.$propertyName = $newValue
         }
