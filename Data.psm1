@@ -1681,25 +1681,22 @@ Function Sort-ByPropertyValue
     }
     End
     {
-        $sortDict = @{}
-        $i = 1
+        $inputObjectDict = $inputObjectList | ConvertTo-Dictionary -Keys $Property -Ordered
+        $usedValueDict = @{}
+        foreach ($value in $Begin) { $usedValueDict[$value] = $true }
+        foreach ($value in $End) { $usedValueDict[$value] = $true }
         foreach ($value in $Begin)
         {
-            $sortDict[$value] = $i
-            $i += 1
+            if ($inputObjectDict[$value]) { $inputObjectDict[$value] }
         }
-        $i = [int32]::MaxValue
+        foreach ($value in $inputObjectDict.Keys)
+        {
+            if (!$usedValueDict[$value]) { $inputObjectDict[$value] }
+        }
         foreach ($value in $End)
         {
-            $sortDict[$value] = $i
-            $i -= 1
+            if ($inputObjectDict[$value]) { $inputObjectDict[$value] }
         }
-        $mid = [int]([int]::MaxValue / 2)
-        
-        $inputObjectList |
-            Group-Denormalized $Property -ToGroupProperty "${Property}Group" -NoCount |
-            Sort-Object { if ($sortDict.Contains($_.$Property)) { $sortDict[$_.$Property] } else { $mid } } |
-            ForEach-Object "${Property}Group"
     }
 }
 
