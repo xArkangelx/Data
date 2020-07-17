@@ -756,12 +756,12 @@ Function Rename-Property
     Process
     {
         if (!$InputObject) { return }
-        $newObject = New-Object PSObject
+        $newObject = [PSObject]::new()
         foreach ($property in $InputObject.PSObject.Properties)
         {
             if ($renameDict.Contains($property.Name))
             {
-                $newObject.PSObject.Properties.Add((New-Object PSNoteProperty $renameDict[$property.Name], $property.Value))
+                $newObject.PSObject.Properties.Add(([PSNoteProperty]::new($renameDict[$property.Name], $property.Value)))
             }
             else
             {
