@@ -1,4 +1,4 @@
-﻿Import-Module ..\ -DisableNameChecking -Force
+﻿Import-Module $PSScriptRoot\.. -DisableNameChecking -Force
 
 Describe "Set-PropertyType" {
 

@@ -1,7 +1,7 @@
 ﻿foreach ($value in $true, $false)
 {
     $Global:191cf922f94e46709f6b1818ae32f66b_ForceLoadPowerShellCmdlets = $value
-    Import-Module (Get-Module -Name Data).Path -DisableNameChecking -Force
+    Import-Module $PSScriptRoot\.. -DisableNameChecking -Force
 
     Describe "Rename-Property" {
 

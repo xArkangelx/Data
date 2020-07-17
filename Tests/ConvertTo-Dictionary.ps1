@@ -1,4 +1,4 @@
-﻿Import-Module (Get-Module -Name Data).Path -DisableNameChecking -Force
+﻿Import-Module $PSScriptRoot\.. -DisableNameChecking -Force
 
 Describe "ConvertTo-Dictionary" {
 
