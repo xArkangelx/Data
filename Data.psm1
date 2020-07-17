@@ -745,7 +745,7 @@ Function Rename-Property
         if ($OtherFromToPairs)
         {
             $actualOtherPairs = $OtherFromToPairs | Where-Object { $_ -ne '+' }
-            if (@($actualOtherPairs).Count % 2 -ne 0) { throw "There must be an event number of additional pairs if provided." }
+            if (@($actualOtherPairs).Count % 2 -ne 0) { throw "There must be an even number of additional pairs if provided." }
             for ($i = 0; $i -lt $actualOtherPairs.Count; $i += 2)
             {
                 $renameDict[$actualOtherPairs[$i]] = $actualOtherPairs[$i+1]
@@ -1811,10 +1811,4 @@ Function Expand-PlainText
         $zip.Close()
         [System.Text.Encoding]::UTF8.GetString($outputStream.ToArray())
     }
-}
-
-{
-
-}
-{
 }
