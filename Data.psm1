@@ -1660,9 +1660,9 @@ Function ConvertTo-Object
     }
 }
 
-
 Function Sort-ByPropertyValue
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
