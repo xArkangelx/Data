@@ -654,6 +654,46 @@ Function Join-TotalRow
     }
 }
 
+Function Join-UniqueIndex
+{
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0)] [string[]] $Property,
+        [Parameter()] [string] $IndexProperty = 'UniqueIndex',
+        [Parameter()] [int] $StartAt = 0,
+        [Parameter()] [string] $KeyJoin = '|'
+    )
+    Begin
+    {
+        $inputObjectList = New-Object System.Collections.Generic.List[object]
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        $keyDict = @{}
+        foreach ($object in $inputObjectList)
+        {
+            $key = $(foreach ($p in $Property) { $object.$p }) -join $KeyJoin
+            $index = $keyDict[$key]
+            if ($index -eq $null)
+            {
+                $index = $StartAt
+                $keyDict[$key] = $StartAt
+                $StartAt += 1
+            }
+            $newObject = [Rhodium.Data.DataHelpers]::CloneObject($object, @($IndexProperty))
+            $newObject.$IndexProperty = $index
+            $newObject
+        }
+    }
+}
+
 Function Expand-Normalized
 {
     [CmdletBinding(PositionalBinding=$false)]
