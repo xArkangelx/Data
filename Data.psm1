@@ -1399,6 +1399,55 @@ Function Set-PropertyDateTimeBreakpoint
     }
 }
 
+Function Set-PropertyDateTimeFormat
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
+        [Parameter(Mandatory=$true, Position=1)] [string] $Format,
+        [Parameter()] [ValidateSet('Short', 'Long')] [string] $AppendTimeZone
+    )
+    Begin
+    {
+        if ($AppendTimeZone)
+        {
+            $tz = [System.TimeZoneInfo]::Local
+            $st = $tz.StandardName
+            $dst = $tz.DaylightName
+            if ($AppendTimeZone -eq 'Short')
+            {
+                $st = $(foreach ($c in $st -split ' ') { $c.Substring(0,1) }) -join ''
+                $dst = $(foreach ($c in $dst -split ' ') { $c.Substring(0,1) }) -join ''
+            }
+        }
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
+        foreach ($propertyName in $Property)
+        {
+            $oldValue = [datetime]$newInputObject.$propertyName
+            $newValue = $oldValue.ToString($Format)
+            if ($AppendTimeZone)
+            {
+                if ($tz.IsDaylightSavingTime($oldValue))
+                {
+                    $newValue = "$newValue $dst"
+                }
+                else
+                {
+                    $newValue = "$newValue $st"
+                }
+            }
+            $newInputObject.$propertyName = $newValue
+
+        }
+        $newInputObject
+    }
+}
+
 Function Set-PropertyType
 {
     Param
