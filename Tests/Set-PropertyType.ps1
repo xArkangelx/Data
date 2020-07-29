@@ -42,6 +42,18 @@ Describe "Set-PropertyType" {
             $result.Value.GetType() | Should Be ([string])
         }
 
+        It 'Converts Int to Bool' {
+            $result = [pscustomobject]@{A=0;B=1} | Set-PropertyType A, B bool
+            $result.A | Should Be $false
+            $result.B | Should Be $true
+        }
+
+        It 'Converts String to Bool' {
+            $result = [pscustomobject]@{A='false';B='true'} | Set-PropertyType A, B bool -Parse
+            $result.A | Should Be $false
+            $result.B | Should Be $true
+        }
+
         It 'Errors when it can''t convert' {
             trap { 'OK' | Should Be 'OK'; return }
             $result = [pscustomobject]@{Value="Testing"} |

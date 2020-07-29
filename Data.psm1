@@ -1454,8 +1454,9 @@ Function Set-PropertyType
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
-        [Parameter(Mandatory=$true, Position=1)] [ValidateSet('DateTime', 'String', 'Int', 'Double')] [string] $Type,
-        [Parameter()] [string] $ParseExact
+        [Parameter(Mandatory=$true, Position=1)] [ValidateSet('DateTime', 'String', 'Int', 'Double', 'Bool')] [string] $Type,
+        [Parameter()] [string] $ParseExact,
+        [Parameter()] [switch] $Parse
     )
     Begin
     {
@@ -1465,6 +1466,7 @@ Function Set-PropertyType
             'DateTime' { [DateTime] }
             'Int' { [int] }
             'Double' { [double] }
+            'Bool' { [bool] }
         }
     }
     Process
@@ -1481,6 +1483,10 @@ Function Set-PropertyType
                 if ($ParseExact)
                 {
                     $newValue = $as::ParseExact($oldValue, $ParseExact, $null)
+                }
+                elseif ($Parse)
+                {
+                    $newValue = $as::Parse($oldValue)
                 }
                 else
                 {
