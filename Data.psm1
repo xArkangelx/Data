@@ -1428,6 +1428,8 @@ Function Set-PropertyDateTimeFormat
         $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
         foreach ($propertyName in $Property)
         {
+            $oldValue = $null
+            $newValue = $null
             $oldValue = [datetime]$newInputObject.$propertyName
             $newValue = $oldValue.ToString($Format)
             if ($AppendTimeZone)

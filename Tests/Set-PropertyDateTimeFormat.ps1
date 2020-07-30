@@ -1,5 +1,9 @@
 ﻿Import-Module $PSScriptRoot\.. -DisableNameChecking -Force
 
+# This has to go outside the tests because Pester won't allow ANY error records to show up
+$errorResult = [pscustomobject]@{A=[DateTime]::Today; B=$null; C=[DateTime]::Today.AddDays(-1); D='Nothing'} |
+    Set-PropertyDateTimeFormat A, B, C, D 'yyyy-MM-dd tt' -ErrorAction SilentlyContinue
+
 Describe "Set-PropertyDateTimeFormat" {
     
     $time1 = [pscustomobject]@{A=[datetime]"3/4/2019 11:55:45.123 PM"; B=[Datetime]"4/5/2019 4:30:15 AM"}
@@ -27,6 +31,13 @@ Describe "Set-PropertyDateTimeFormat" {
         It 'Works with AppendTimeZone Long' {
             [pscustomobject]@{Date="1/1/2020"} |
                 Set-PropertyDateTimeFormat Date yyyy-MM-dd -AppendTimeZone Long
+        }
+
+        It 'Handles errors' {
+            $errorResult.A | Should Be ([DateTime]::Today.ToString('yyyy-MM-dd tt'))
+            $errorResult.B | Should Be $null
+            $errorResult.C | Should Be ([DateTime]::Today.AddDays(-1).ToString('yyyy-MM-dd tt'))
+            $errorResult.D | Should Be $null
         }
     }
 }
