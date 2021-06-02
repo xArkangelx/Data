@@ -95,6 +95,7 @@ FunctionsToExport = @(
     'Join-Index'
     'Join-MissingSetCounts'
     'Join-Percentage'
+    'Join-PropertySetComparison'
     'Join-TotalRow'
     'Join-UniqueIndex'
     'Expand-Normalized'

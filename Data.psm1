@@ -621,6 +621,90 @@ Function Join-Percentage
     }
 }
 
+Function Join-PropertySetComparison
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true)] [string] $BaseProperty,
+        [Parameter(Mandatory=$true)] [string] $ComparisonProperty,
+        [Parameter()] [string] $ResultProperty,
+        [Parameter()] [string] $MissingProperty,
+        [Parameter()] [string] $ExtraProperty,
+        [Parameter()] [object[]] $SameDifferentMissingExtraValues
+    )
+    Begin
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+
+        if ($SameDifferentMissingExtraValues.Count -notin 0,4) { throw "SameDifferentMissingExtraValues must have exactly 4 values (Same, Different, Missing Extra)." }
+        if ($ResultProperty -xor $SameDifferentMissingExtraValues.Count) { throw "ResultProperty and SameDifferentMissingExtraValues must be specified together." }
+
+        $newProperties = @(
+            if ($ResultProperty) { $ResultProperty }
+            if ($MissingProperty) { $MissingProperty }
+            if ($ExtraProperty) { $ExtraProperty }
+        )
+
+        if (!$newProperties) { throw "At least one of ResultProperty, MissingProperty and/or ExtraProperty must be specified." }
+
+        $getMissing = $SameDifferentMissingExtraValues.Count -or $MissingProperty
+        $getExtra = $SameDifferentMissingExtraValues.Count -or $ExtraProperty
+    }
+    Process
+    {
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, @($newProperties))
+
+        $missingList = if ($getMissing)
+        {
+            $compareDict = @{}
+            foreach ($value in $InputObject.$ComparisonProperty)
+            {
+                if ([String]::IsNullOrEmpty($value)) { continue }
+                $compareDict[$value] = $true
+            }
+
+            foreach ($value in $InputObject.$BaseProperty)
+            {
+                if ([String]::IsNullOrEmpty($value)) { continue }
+                if (!$compareDict.ContainsKey($value)) { $value }
+            }
+        }
+
+        $extraList = if ($getExtra)
+        {
+            $baseDict = @{}
+            foreach ($value in $InputObject.$BaseProperty)
+            {
+                if ([String]::IsNullOrEmpty($value)) { continue }
+                $baseDict[$value] = $true
+            }
+
+            foreach ($value in $InputObject.$ComparisonProperty)
+            {
+                if ([String]::IsNullOrEmpty($value)) { continue }
+                if (!$baseDict.ContainsKey($value)) { $value }
+            }
+        }
+
+        if ($ResultProperty)
+        {
+            $m = @($missingList).Count -ne 0
+            $e = @($extraList).Count -ne 0
+
+            $newInputObject.$ResultProperty = if (!$m -and !$e) { $SameDifferentMissingExtraValues[0] }
+                elseif ($m -and $e) { $SameDifferentMissingExtraValues[1] }
+                elseif ($m) { $SameDifferentMissingExtraValues[2] }
+                elseif ($e) { $SameDifferentMissingExtraValues[3] }
+        }
+
+        if ($MissingProperty) { $newInputObject.$MissingProperty = $missingList }
+        if ($ExtraProperty) { $newInputObject.$ExtraProperty = $extraList }
+
+        $newInputObject
+    }
+}
+
 Function Join-TotalRow
 {
     Param
