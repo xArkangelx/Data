@@ -40,5 +40,12 @@ Describe "Join-PropertySetComparison" {
             $result.Missing | Should Be 3
             $result.Extra | Should Be 5
         }
+
+        It 'Accepts ComparisonValues' {
+            $result = [pscustomobject]@{Base=1,2,3} |
+                Join-PropertySetComparison -BaseProperty Base -ComparisonValues 1,2,4,6 -ExtraProperty Extra -MissingProperty Missing
+            $result.Missing | Should Be 3
+            $result.Extra -join '|' | Should Be "4|6"
+        }
     }
 }

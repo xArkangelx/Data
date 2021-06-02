@@ -627,7 +627,8 @@ Function Join-PropertySetComparison
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true)] [string] $BaseProperty,
-        [Parameter(Mandatory=$true)] [string] $ComparisonProperty,
+        [Parameter(Mandatory=$true,ParameterSetName='ComparisonProperty')] [string] $ComparisonProperty,
+        [Parameter(Mandatory=$true,ParameterSetName='ComparisonValues')] [object[]] $ComparisonValues,
         [Parameter()] [string] $ResultProperty,
         [Parameter()] [string] $MissingProperty,
         [Parameter()] [string] $ExtraProperty,
@@ -655,10 +656,13 @@ Function Join-PropertySetComparison
     {
         $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, @($newProperties))
 
+        $compareValueList = if ($PSCmdlet.ParameterSetName -eq 'ComparisonValues') { $ComparisonValues }
+            else { $InputObject.$ComparisonProperty }
+
         $missingList = if ($getMissing)
         {
             $compareDict = @{}
-            foreach ($value in $InputObject.$ComparisonProperty)
+            foreach ($value in $compareValueList)
             {
                 if ([String]::IsNullOrEmpty($value)) { continue }
                 $compareDict[$value] = $true
@@ -680,7 +684,7 @@ Function Join-PropertySetComparison
                 $baseDict[$value] = $true
             }
 
-            foreach ($value in $InputObject.$ComparisonProperty)
+            foreach ($value in $compareValueList)
             {
                 if ([String]::IsNullOrEmpty($value)) { continue }
                 if (!$baseDict.ContainsKey($value)) { $value }
