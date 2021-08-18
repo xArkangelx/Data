@@ -406,24 +406,52 @@ Function Join-List
         [Parameter()] [switch] $MatchesOnly,
         [Parameter()] [switch] $FirstRightOnly,
         [Parameter()] [switch] $IncludeUnmatchedRight,
-        [Parameter()] [string[]] $KeepProperty,
+        [Parameter()] [object[]] $KeepProperty,
+        [Parameter()] [ValidateSet('Never', 'Always', 'IfNullOrEmpty', 'IfNewValueNotNullOrEmpty')] [string] $Overwrite = 'Never',
         [Parameter()] [switch] $OverwriteAll,
         [Parameter()] [switch] $OverwriteNull,
         [Parameter()] [string] $KeyJoin = '|'
     )
     Begin
     {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+        $usedKeys = @{}
+        $overwriteMode = if ($OverwriteAll) { 'Always' } elseif ($OverwriteNull) { 'IfNullOrEmpty' } else { $Overwrite }
+        
+        $hasKeepProperty = $false
+        if ($PSBoundParameters.ContainsKey('KeepProperty'))
+        {
+            $hasKeepProperty = $true
+            $keepPropertyDict = [ordered]@{}
+            foreach ($prop in $KeepProperty)
+            {
+                if ($prop -is [string]) { $keepPropertyDict[$prop] = $prop }
+                elseif ($prop -is [hashtable])
+                {
+                    foreach ($pair in $prop.GetEnumerator())
+                    {
+                        $keepPropertyDict[$pair.Key] = $pair.Value
+                    }
+                }
+                else
+                {
+                    throw "KeepProperty must contain strings or hashtables."
+                }
+            }
+        }
+
+        if (!$JoinKeys) { $JoinKeys = $InputKeys }
         $joinDict = [ordered]@{}
         foreach ($joinObject in $JoinData)
         {
             $keyValue = $(foreach ($joinKey in $JoinKeys) { $joinObject.$joinKey }) -join $KeyJoin
             if (!$joinDict.Contains($keyValue))
             {
-                $joinDict[$keyValue] = New-Object System.Collections.Generic.List[object]
+                $joinDict[$keyValue] = [System.Collections.Generic.List[object]]::new()
             }
             $joinDict[$keyValue].Add($joinObject)
         }
-        $usedKeys = @{}
+
         $joinObjectPropertyList = $joinObject.PSObject.Properties |
             Where-Object Name -NotIn $JoinKeys |
             Select-Object -ExpandProperty Name
@@ -431,11 +459,13 @@ Function Join-List
     Process
     {
         if (!$InputObject) { return }
+
         $keyValue = $(foreach ($inputKey in $InputKeys) { $InputObject.$inputKey }) -join $KeyJoin
         $joinObject = $joinDict[$keyValue]
-        if (!$joinObject -and $MatchesOnly) { return }
+
         if (!$joinObject)
         {
+            if ($MatchesOnly) { return }
             $newObject = [ordered]@{}
             foreach ($property in $InputObject.PSObject.Properties)
             {
@@ -444,12 +474,17 @@ Function Join-List
             foreach ($propertyName in $joinObjectPropertyList)
             {
                 if ($propertyName -in $JoinKeys) { continue }
-                if ($PSBoundParameters.ContainsKey('KeepProperty') -and $propertyName -notin $KeepProperty) { continue }
+                if ($hasKeepProperty)
+                {
+                    if (!$keepPropertyDict.Contains($propertyName)) { continue }
+                    $propertyName = $keepPropertyDict[$propertyName]
+                }
                 $newObject[$propertyName] = $null
             }
             [pscustomobject]$newObject
             return
         }
+
         $usedKeys[$keyValue] = $true
         foreach ($joinObjectCopy in $joinObject)
         {
@@ -461,10 +496,22 @@ Function Join-List
             foreach ($property in $joinObjectCopy.PSObject.Properties)
             {
                 if ($property.Name -in $JoinKeys) { continue }
-                if ($PSBoundParameters.ContainsKey('KeepProperty') -and $property.Name -notin $KeepProperty) { continue }
-                if ($newObject.Contains($property.Name) -and (!$OverwriteAll -or
-                    ([String]::IsNullOrWhiteSpace($newObject[$property.Name] -and !$OverwriteNull)))) { continue }
-                $newObject[$property.Name] = $property.Value
+                
+                $newName = $property.Name
+                if ($hasKeepProperty)
+                {
+                    if (!$keepPropertyDict.Contains($property.Name)) { continue }
+                    $newName = $keepPropertyDict[$property.Name]
+                }
+
+                if ($overwriteMode -ne 'Always' -and $newObject.Contains($newName))
+                {
+                    if ($overwriteMode -eq 'Never') { continue }
+                    if ($overwriteMode -eq 'IfNullOrEmpty' -and ![String]::IsNullOrEmpty($newObject[$newName])) { continue }
+                    if ($overwriteMode -eq 'IfNewValueNotNullOrEmpty' -and [String]::IsNullOrEmpty($property.Value)) { continue }
+                }
+
+                $newObject[$newName] = $property.Value
             }
             [pscustomobject]$newObject
             if ($FirstRightOnly) { break }
@@ -490,9 +537,18 @@ Function Join-List
                 }
                 foreach ($joinProperty in $joinObjectCopy.PSObject.Properties)
                 {
-                    if ($joinProperty.Name -in $JoinKeys) { continue }
-                    if ($PSBoundParameters.ContainsKey('KeepProperty') -and $property.Name -notin $KeepProperty) { continue }
-                    $newObject[$joinProperty.Name] = $joinProperty.Value
+                    $propertyName = $joinProperty.Name
+                    if ($propertyName -in $JoinKeys) { continue }
+
+                    if ($hasKeepProperty)
+                    {
+                        if (!$keepPropertyDict.Contains($propertyName)) { continue }
+                        $propertyName = $keepPropertyDict[$propertyName]
+                    }
+
+                    if ($overwriteMode -eq 'Never' -and $newObject.Contains($newName)) { continue }
+
+                    $newObject[$propertyName] = $joinProperty.Value
                 }
                 [pscustomobject]$newObject
                 if ($FirstRightOnly) { break }
