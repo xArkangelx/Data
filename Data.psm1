@@ -945,7 +945,7 @@ Function Rename-Property
         {
             if ($renameDict.Contains($property.Name))
             {
-                $newObject.PSObject.Properties.Add(([PSNoteProperty]::new($renameDict[$property.Name], $property.Value)))
+                $newObject.PSObject.Properties.Add([PSNoteProperty]::new($renameDict[$property.Name], $property.Value))
             }
             else
             {
