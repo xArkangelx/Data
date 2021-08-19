@@ -1379,7 +1379,7 @@ Function Set-PropertyOrder
     Process
     {
         if (!$InputObject) { return }
-        $newObject = New-Object PSObject
+        $newObject = [psobject]::new()
         $oldPropertyList = $InputObject.PSObject.Properties
         foreach ($propertyName in $Begin)
         {
