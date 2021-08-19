@@ -1172,13 +1172,14 @@ Function Select-Excluding
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true,Position=0)] [string[]] $InputKeys,
         [Parameter(Position=1)] [object[]] $CompareData,
-        [Parameter(Mandatory=$true,Position=2)] [string[]] $CompareKeys,
+        [Parameter(Position=2)] [string[]] $CompareKeys,
         [Parameter()] [string] $KeyJoin = '|'
     )
     Begin
     {
-        $noData = !$CompareData
+        $noData = !@($CompareData).Count
         $compareDict = @{}
+        if (!$CompareKeys) { $CompareKeys = $InputKeys }
         foreach ($compareObject in $CompareData)
         {
             $keyValue = $(foreach ($key in $CompareKeys) { $compareObject.$key }) -join $KeyJoin
@@ -1200,13 +1201,14 @@ Function Select-Including
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true,Position=0)] [string[]] $InputKeys,
         [Parameter(Position=1)] [object[]] $CompareData,
-        [Parameter(Mandatory=$true,Position=2)] [string[]] $CompareKeys,
+        [Parameter(Position=2)] [string[]] $CompareKeys,
         [Parameter()] [string] $KeyJoin = '|'
     )
     Begin
     {
-        $noData = !$CompareData
+        $noData = !@($CompareData).Count
         $compareDict = @{}
+        if (!$CompareKeys) { $CompareKeys = $InputKeys }
         foreach ($compareObject in $CompareData)
         {
             $keyValue = $(foreach ($key in $CompareKeys) { $compareObject.$key }) -join $KeyJoin
