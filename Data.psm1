@@ -590,6 +590,7 @@ Function Join-MissingSetCounts
         [Parameter()] [string] $Set2Property,
         [Parameter()] [string[]] $Set2Values,
         [Parameter()] [string] $CountProperty = 'Count',
+        [Parameter()] [object] $CountValue = 0,
         [Parameter()] [string] $PercentageProperty,
         [Parameter()] [string] $KeyJoin = '|'
     )
@@ -638,7 +639,7 @@ Function Join-MissingSetCounts
                 $result = [pscustomobject]$template
                 $result.$Set1Property = $set1Value
                 if ($Set2Property) { $result.$Set2Property = $set2Value }
-                $result.$CountProperty = 0
+                $result.$CountProperty = $CountValue
                 try { $result.$PercentageProperty = "0%" } catch { }
                 $result
             }

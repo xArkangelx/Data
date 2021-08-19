@@ -140,4 +140,13 @@ Describe "Join-MissingSetCounts" {
             '.Trim().Replace(' ','').Replace("`r","")
         }
     }
+
+    Context 'Custom Value' {
+        It "Can fill in a custom value" {
+            $results = [pscustomobject]@{Prop1='A';Count=1} |
+                Join-MissingSetCounts -Set1Property Prop1 -Set1Values A, B -CountValue "Unknown"
+
+            $results[1].Count | Should Be 'Unknown'
+        }
+    }
 }
