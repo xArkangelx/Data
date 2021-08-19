@@ -1013,11 +1013,15 @@ Function Convert-DateTimeZone
         [Parameter(ParameterSetName='Pipeline')] [string] $ToTimeZoneProperty,
         [Parameter()] [string] $ToTimeZone,
         [Parameter()] [switch] $ToLocal,
-        [Parameter()] [switch] $ToUtc
+        [Parameter()] [switch] $ToUtc,
+        [Parameter()] [string] $Format,
+        [Parameter()] [ValidateSet('Short', 'Long')] [string] $AppendTimeZone
     )
     Begin
     {
         trap { $PSCmdlet.ThrowTerminatingError($_) }
+
+        if ($AppendTimeZone -and -not $Format) { throw "Format must be specified with AppendTimeZone." }
 
         $fromTimeZoneMode = $null
         $toTimeZoneMode = $null
@@ -1044,14 +1048,14 @@ Function Convert-DateTimeZone
             $toTimeZoneMode = 'Specified'
             $toTimeZoneValue = [System.TimeZoneInfo]::FindSystemTimeZoneById($ToTimeZone)
         }
-        if ($ToLocal) { $toCount += 1; $toTimeZoneMode = 'Local' }
-        if ($ToUtc) { $toCount += 1; $toTimeZoneMode = 'Utc' }
+        if ($ToLocal) { $toCount += 1; $toTimeZoneMode = 'Local'; $toTimeZoneValue = [System.TimeZoneInfo]::Local }
+        if ($ToUtc) { $toCount += 1; $toTimeZoneMode = 'Utc'; $toTimeZoneValue = [System.TimeZoneInfo]::Utc }
 
         if ($fromCount -ne 1) { throw "Exactly one From parameter must be specified." }
         if ($toCount -ne 1) { throw "Exactly one To parameter must be specified." }
 
-        $dateTimeList = New-Object System.Collections.Generic.List[Nullable[DateTime]]
-        $newDateTimeList = New-Object System.Collections.Generic.List[Nullable[DateTime]]
+        $dateTimeList = [System.Collections.Generic.List[Nullable[DateTime]]]::new()
+        $newDateTimeList = [System.Collections.Generic.List[Nullable[DateTime]]]::new()
 
         if ($PSCmdlet.ParameterSetName -eq 'Value') { $dateArrayLength = 1 }
         else { $dateArrayLength = $DateTimeProperty.Count }
@@ -1072,7 +1076,7 @@ Function Convert-DateTimeZone
                 }
                 catch
                 {
-                    if ($value) { Write-Warning "'$value' could not be converted to a DateTime" }
+                    if (![string]::IsNullOrEmpty($value)) { Write-Warning "'$value' could not be converted to a DateTime" }
                     $dateArray[$i] = $null
                 }
             }
@@ -1106,7 +1110,24 @@ Function Convert-DateTimeZone
         $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $DateTimeProperty)
         for ($i = 0; $i -lt $dateArrayLength; $i++)
         {
-            $newInputObject.($DateTimeProperty[$i]) = $dateArray[$i]
+            $newValue = $dateArray[$i]
+            if ($Format -and ![String]::IsNullOrWhiteSpace($newValue))
+            {
+                $timeZoneLabel = if ($AppendTimeZone)
+                {
+                    $st = $toTimeZoneValue.StandardName
+                    $dst = $toTimeZoneValue.DaylightName
+                    if ($AppendTimeZone -eq 'Short')
+                    {
+                        $st = $(foreach ($c in $st -split ' ') { $c.Substring(0,1) }) -join ''
+                        $dst = $(foreach ($c in $dst -split ' ') { $c.Substring(0,1) }) -join ''
+                    }
+                    if ($toTimeZoneValue.IsDaylightSavingTime($newValue)) { " $dst" } else { " $st" }
+                }
+
+                $newValue = "$($newValue.ToString($Format))$timeZoneLabel"
+            }
+            $newInputObject.($DateTimeProperty[$i]) = $newValue
         }
 
         $newInputObject
