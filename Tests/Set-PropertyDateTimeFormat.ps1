@@ -5,7 +5,7 @@ $errorResult = [pscustomobject]@{A=[DateTime]::Today; B=$null; C=[DateTime]::Tod
     Set-PropertyDateTimeFormat A, B, C, D 'yyyy-MM-dd tt' -ErrorAction SilentlyContinue
 
 Describe "Set-PropertyDateTimeFormat" {
-    
+
     $time1 = [pscustomobject]@{A=[datetime]"3/4/2019 11:55:45.123 PM"; B=[Datetime]"4/5/2019 4:30:15 AM"}
 
     Context 'Default' {
@@ -31,6 +31,20 @@ Describe "Set-PropertyDateTimeFormat" {
         It 'Works with AppendTimeZone Long' {
             [pscustomobject]@{Date="1/1/2020"} |
                 Set-PropertyDateTimeFormat Date yyyy-MM-dd -AppendTimeZone Long
+        }
+
+        It 'Ignores Null' {
+            [pscustomobject]@{A=$null} |
+                Set-PropertyDateTimeFormat A 'yyyy-MM-dd' |
+                ForEach-Object A |
+                Should Be $null
+        }
+
+        It 'Ignores Empty String' {
+            [pscustomobject]@{A=''} |
+                Set-PropertyDateTimeFormat A 'yyyy-MM-dd' |
+                ForEach-Object A |
+                Should Be ''
         }
 
         It 'Handles errors' {

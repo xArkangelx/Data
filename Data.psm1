@@ -1598,6 +1598,7 @@ Function Set-PropertyDateTimeFormat
         {
             $oldValue = $null
             $newValue = $null
+            if ([String]::IsNullOrEmpty($newInputObject.$propertyName)) { continue }
             $oldValue = [datetime]$newInputObject.$propertyName
             $newValue = $oldValue.ToString($Format)
             if ($AppendTimeZone)
