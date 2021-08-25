@@ -3,7 +3,7 @@
 Describe "Expand-Normalized" {
 
     Context 'Default' {
-        
+
         It 'Adds Missing Properties' {
             $result = [pscustomobject][ordered]@{A=1} |
                 Expand-Normalized B
@@ -43,7 +43,7 @@ Describe "Expand-Normalized" {
             $result[0].PSObject.Properties.Name -join '+' | Should Be A+B
             $result[0].B | Should Be 2
             $result[1].B | Should Be 3
-            $result[2].B | Should Be 4            
+            $result[2].B | Should Be 4
         }
 
         It 'Expands single objects' {

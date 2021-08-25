@@ -1,7 +1,7 @@
 ﻿Import-Module $PSScriptRoot\.. -DisableNameChecking -Force
 
 Describe "Set-PropertyDateFloor" {
-    
+
     $time1 = [pscustomobject]@{A=[datetime]"3/4/2019 11:55:45.123 PM"; B=[Datetime]"4/5/2019 4:30:15 AM"}
 
     Context 'Default' {

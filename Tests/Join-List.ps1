@@ -3,7 +3,7 @@
 Describe "Join-List" {
 
     Context 'Default' {
-        
+
         $clusterList = "
             ClusterId,ClusterName,ClusterType
             1,SQL001,SQL

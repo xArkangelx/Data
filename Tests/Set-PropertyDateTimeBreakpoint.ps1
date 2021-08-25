@@ -1,7 +1,7 @@
 ﻿Import-Module $PSScriptRoot\.. -DisableNameChecking -Force
 
 Describe "Set-PropertyDateTimeBreakpoint" {
-    
+
     Function DefineTimeSpan($Span,$Expected)
     {
         $spanDict[[TimeSpan]::Parse($Span)] = $Expected
@@ -10,7 +10,7 @@ Describe "Set-PropertyDateTimeBreakpoint" {
     Context 'Default' {
         It 'Works with all time types' {
             $spanDict = [ordered]@{}
-            
+
             DefineTimeSpan 0.00:01 "0 - 15 Minutes"
             DefineTimeSpan 0.00:15 "0 - 15 Minutes"
             DefineTimeSpan 0.00:30 "15 Minutes - 30 Minutes"
@@ -32,7 +32,6 @@ Describe "Set-PropertyDateTimeBreakpoint" {
             DefineTimeSpan 70.0:00 "2 Months - 1 Year"
             DefineTimeSpan 400.0:00 "Over 1 Year"
 
-            
             $resultList = $spanDict.GetEnumerator() |
                 Select-Object Name, Value |
                 Set-PropertyDateTimeBreakpoint -Property Name -ToNewProperty Label -Minutes 15, 30 -Hours 1, 5, 10, 11, 12 -Days 1, 2 -Weeks 1, 2 -Months 1, 2 -Years 1
