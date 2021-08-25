@@ -274,47 +274,49 @@ Function Group-Pivot
     )
     Begin
     {
-        $inputObjectList = New-Object System.Collections.Generic.List[object]
-        $columnValueDict = [ordered]@{}
+        $inputObjectList = [System.Collections.Generic.List[object]]::new()
+        $columnDict = [ordered]@{}
     }
     Process
     {
         if (!$InputObject) { return }
         $inputObjectList.Add($InputObject)
-        $columnValueDict[[string]$InputObject.$ColumnProperty] = $true
+        $columnDict[[string]$InputObject.$ColumnProperty] = $true
     }
     End
     {
-        $groupDict = $inputObjectList | ConvertTo-Dictionary -Keys $GroupProperty -Ordered
+        $groupDict = $inputObjectList | ConvertTo-Dictionary -Ordered -Keys $GroupProperty
+        $valueDict = @{}
+
+        foreach ($value in $columnDict.Keys)
+        {
+            $valueDict[$value] = $inputObjectList |
+                Where-Object $ColumnProperty -eq $value |
+                ConvertTo-Dictionary $GroupProperty -KeyJoin '|'
+        }
 
         foreach ($group in $groupDict.Values)
         {
             $result = [ordered]@{}
-            $firstObject = $group[0]
-            $columnGroupDict = $group |
-                Where-Object $ColumnProperty -ne $null |
-                ConvertTo-Dictionary -Keys $ColumnProperty -Ordered
-            foreach ($propertyName in $GroupProperty)
+            foreach ($property in $GroupProperty)
             {
-                $result[$propertyName] = $firstObject.$propertyName
+                $result[$property] = $group[0].$property
             }
-            if (!$NoCount) { $result['Count'] = $group.Count }
+            $key = $result.Values -join '|' # Keep here since it's building off the group property values
+
+            if (!$NoCount.IsPresent) { $result['Count'] = $group.Count }
+
             foreach ($property in $KeepFirst)
             {
-                $result[$property] = $firstObject.$property
+                $result[$property] = $group[0].$property
             }
-            foreach ($propertyName in $columnValueDict.Keys)
+
+            foreach ($value in $columnDict.Keys)
             {
-                $valueGroup = $columnGroupDict[$propertyName]
-                if ($valueGroup)
-                {
-                    $result[$propertyName] = $valueGroup[0].$ValueProperty
-                }
-                else
-                {
-                    $result[$propertyName] = $null
-                }
+                $valueGroup = $valueDict[$value][$key]
+                $result[$value] = if ($valueGroup) { $valueGroup[0].$ValueProperty }
             }
+
             [pscustomobject]$result
         }
     }
