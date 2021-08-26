@@ -83,69 +83,78 @@ foreach ($value in $true, $false)
 
         Context "Where Tests" {
 
-            It "-Property -Value -Where [string]" {
+            It "Where Property is Truthy (Int 1)" {
                 [pscustomobject]@{A=1} |
                     Set-PropertyValue B 2 -Where A |
                     ForEach-Object B |
                     Should Be 2
+            }
 
+            It "Where Property is Truthy (Int 0)" {
                 [pscustomobject]@{A=0} |
                     Set-PropertyValue B 2 -Where A |
                     ForEach-Object B |
                     Should Be $null
+            }
 
+            It "Where Property is Truthy (Empty String" {
                 [pscustomobject]@{A=''} |
                     Set-PropertyValue B 2 -Where A |
                     ForEach-Object B |
                     Should Be $null
+            }
 
+            It "Where Property is Truthy (Null Value)" {
                 [pscustomobject]@{A=$null} |
                     Set-PropertyValue B 2 -Where A |
                     ForEach-Object B |
                     Should Be $null
+            }
 
+            It "Where Property is Truthy (Whitespace)" {
                 [pscustomobject]@{A=' '} |
                     Set-PropertyValue B 2 -Where A |
                     ForEach-Object B |
                     Should Be 2
             }
 
-            It "-Property -Value -Where [string] (Preserves Old)" {
-
+            It "Where Property is Truthy (Confirming an old value isn't overwritten)" {
                 [pscustomobject]@{A=$null; B='old'} |
                     Set-PropertyValue B 2 -Where A |
                     ForEach-Object B |
                     Should Be 'old'
             }
 
-            It "-Property -Value -Where [scriptblock]" {
+            It "Where ScriptBlock (Result is Int 1)" {
                 [pscustomobject]@{A=1} |
                     Set-PropertyValue B 2 -Where { $_.A } |
                     ForEach-Object B |
                     Should Be 2
+            }
 
+            It "Where ScriptBlock (Result is Int 0)" {
                 [pscustomobject]@{A=0} |
                     Set-PropertyValue B 2 -Where { $_.A } |
                     ForEach-Object B |
                     Should Be $null
             }
-
         }
 
         Context "Match Tests" {
 
-            It "-Property -Value [scriptblock] -Where [scriptblock] (Match)" {
+            It "Where ScriptBlock contains Match; Match persists to Value ScriptBlock (Match is True)" {
                 [pscustomobject]@{A="abc123def"} |
                     Set-PropertyValue B { $Matches[1] } -Where { $_.A -match "(\d+)" } |
                     ForEach-Object B |
                     Should Be 123
+            }
 
+            It "Where ScriptBlock contains Match; Match persists to Value ScriptBlock (Match is False)" {
                 [pscustomobject]@{A="abc123def"} |
                     Set-PropertyValue B { $Matches[1] } -Where { $_.A -match "xyz" } |
                     ForEach-Object B |
                     Should Be $null
             }
-
         }
 
         Context "JoinWith Tests" {
