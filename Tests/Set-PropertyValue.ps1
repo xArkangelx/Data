@@ -205,3 +205,52 @@ foreach ($value in $true, $false)
 
     if ($VisualStudioDebug) { return }
 }
+
+
+Write-Host -ForegroundColor Cyan "Performance Tests"
+
+
+$compiledTests = [ordered]@{}
+foreach ($value in $true, $false)
+{
+    Write-Host -ForegroundColor Cyan "Performance Tests - PowerShell: $value"
+    $Global:191cf922f94e46709f6b1818ae32f66b_ForceLoadPowerShellCmdlets = $value
+    Import-Module $PSScriptRoot\.. -DisableNameChecking -Force
+
+    $dataSet = for ($i = 0; $i -lt 50000; $i++)
+    {
+        [pscustomobject]@{
+            Name = "Item$i"
+            Value = $i
+            Inverse = -$i
+            EmptyString = ''
+            NullValue = $null
+        }
+    }
+
+    $dataSetClone = $dataSet | Select-Object *
+
+    $tests = [ordered]@{}
+
+    $tests.Baseline = Measure-Command {
+        $dataSet | Set-PropertyValue A 1
+    }
+
+    $tests.NoClone = Measure-Command {
+        $dataSet | Set-PropertyValue A 1 -NoClone
+    }
+
+    $tests.ScriptBaseline = Measure-Command {
+        $dataSet | Set-PropertyValue A { 1 }
+    }
+
+    $compiledTests[$value] = [pscustomobject]$tests
+}
+
+& {
+    $compiledTests.$true | Set-PropertyValue Mode PowerShell
+    $compiledTests.$false | Set-PropertyValue Mode 'C#'
+} | Expand-Property -KeyProperty Mode -NameProperty Test -ValueProperty TimeTaken |
+    Set-PropertyValue TimeTaken { [Math]::Round($_.TimeTaken.TotalMilliseconds,0) } |
+    Group-Pivot -GroupProperty Test -ColumnProperty Mode -ValueProperty TimeTaken -NoCount |
+    Format-Table -AutoSize
