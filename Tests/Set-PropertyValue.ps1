@@ -12,10 +12,10 @@ foreach ($value in $true, $false)
         Import-Module $PSScriptRoot\.. -DisableNameChecking -Force
     }
 
-    Describe "Set-PropertyValue" {
+    Describe "Set-PropertyValue - PowerShell: $value" {
 
-        Context "Default - PowerShell: $value" {
-            It '-Property -Value' {
+        Context "Basic Checks" {
+            It 'Sets Property to Value' {
                 [pscustomobject]@{A=1} |
                     Set-PropertyValue B 2 |
                     ForEach-Object B |
@@ -28,25 +28,28 @@ foreach ($value in $true, $false)
                 $new | Should Not Be $original
             }
 
-            It '-NoClone' {
+            It 'Skips cloning with NoClone' {
                 [pscustomobject]@{A=1} |
                     Set-PropertyValue B 2 -NoClone |
                     ForEach-Object B |
                     Should Be 2
             }
 
-            It "-Property -Value -NoClone" {
+            It "Skips cloning with NoClone (Testing with -Value)" {
                 $original = [pscustomobject]@{A=1}
                 $new = $original | Set-PropertyValue B 2 -NoClone
                 $new | Should Be $original
             }
 
-            It "-Property -Value [ScriptBlock]" {
+            It "Executes a ScriptBlock" {
                 [pscustomobject]@{A=3} |
                     Set-PropertyValue B { $_.A * 2 } |
                     ForEach-Object B |
                     Should Be 6
             }
+        }
+
+        Context "IfUnset Tests" {
 
             It "-Property -Value -IfUnset (When Unset)" {
                 [pscustomobject]@{A=$null} |
@@ -76,6 +79,9 @@ foreach ($value in $true, $false)
                     ForEach-Object A |
                     Should Be 0
             }
+        }
+
+        Context "Where Tests" {
 
             It "-Property -Value -Where [string]" {
                 [pscustomobject]@{A=1} |
@@ -124,6 +130,10 @@ foreach ($value in $true, $false)
                     Should Be $null
             }
 
+        }
+
+        Context "Match Tests" {
+
             It "-Property -Value [scriptblock] -Where [scriptblock] (Match)" {
                 [pscustomobject]@{A="abc123def"} |
                     Set-PropertyValue B { $Matches[1] } -Where { $_.A -match "(\d+)" } |
@@ -135,6 +145,10 @@ foreach ($value in $true, $false)
                     ForEach-Object B |
                     Should Be $null
             }
+
+        }
+
+        Context "JoinWith Tests" {
 
             It "-JoinWith Single Value" {
                 [pscustomobject]@{A=1} |
