@@ -155,6 +155,34 @@ foreach ($value in $true, $false)
                     ForEach-Object B |
                     Should Be $null
             }
+
+            It "Where Match Value" {
+                [pscustomobject]@{A="abc123def"} |
+                    Set-PropertyValue B { $Matches[1] } -Where A -Match "(\d+)" |
+                    ForEach-Object B |
+                    Should Be 123
+            }
+
+            It "Where Match Value (Ignore group)" {
+                [pscustomobject]@{A="abc123def"} |
+                    Set-PropertyValue B { 'C' } -Where A -Match "(\d+)" |
+                    ForEach-Object B |
+                    Should Be C
+            }
+
+            It "Where Match Value (Group 0)" {
+                [pscustomobject]@{A="abc123def"} |
+                    Set-PropertyValue B { $Matches[0] } -Where A -Match "(\d+)" |
+                    ForEach-Object B |
+                    Should Be 123
+            }
+
+            It "Where Match Value (Named Group)" {
+                [pscustomobject]@{A="abc123def"} |
+                    Set-PropertyValue B { $Matches['myname'] } -Where A -Match "abc(?<myname>\d+)" |
+                    ForEach-Object B |
+                    Should Be 123
+            }
         }
 
         Context "JoinWith Tests" {

@@ -1684,9 +1684,19 @@ Function Set-PropertyValue
         [Parameter(Position=1)] [object] $Value,
         [Parameter()] [string] $JoinWith,
         [Parameter()] [object] $Where,
+        [Parameter()] [string] $Match,
         [Parameter()] [switch] $IfUnset,
         [Parameter()] [switch] $NoClone
     )
+    Begin
+    {
+        if ($Match)
+        {
+            $matchRegex = [regex]::new($Match, [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+            $usesMatch = $true
+        }
+        else { $usesMatch = $false }
+    }
     Process
     {
         trap { $PSCmdlet.ThrowTerminatingError($_) }
@@ -1706,7 +1716,15 @@ Function Set-PropertyValue
         }
         elseif (![String]::IsNullOrWhiteSpace($Where))
         {
-            $setValue = [System.Management.Automation.LanguagePrimitives]::IsTrue($newInputObject."$Where")
+            if ($usesMatch)
+            {
+                $setValue = $newInputObject."$Where" -match $Match
+                $matchVar.Value = $Matches
+            }
+            else
+            {
+                $setValue = [System.Management.Automation.LanguagePrimitives]::IsTrue($newInputObject."$Where")
+            }
         }
 
         if (!$setValue) { return $newInputObject }

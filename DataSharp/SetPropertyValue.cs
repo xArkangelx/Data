@@ -21,7 +21,13 @@ namespace DataSharp
         public object Value { get; set; }
 
         [Parameter()]
+        public string JoinWith { get; set; }
+
+        [Parameter()]
         public object Where { get; set; }
+
+        [Parameter()]
+        public string Match { get; set; }
 
         [Parameter()]
         public SwitchParameter IfUnset { get; set; }
@@ -29,14 +35,13 @@ namespace DataSharp
         [Parameter()]
         public SwitchParameter NoClone { get; set; }
 
-        [Parameter()]
-        public string JoinWith { get; set; }
-
         private bool whereIsScriptBlock = false;
         private ScriptBlock whereAsScriptBlock;
 
         private bool whereIsString = false;
         private string whereAsString;
+        private System.Text.RegularExpressions.Regex matchRegex;
+        private string[] matchGroupNames;
 
         private bool valueIsScriptBlock = false;
         private ScriptBlock valueAsScriptBlock;
@@ -57,6 +62,12 @@ namespace DataSharp
             {
                 valueIsScriptBlock = true;
                 valueAsScriptBlock = (ScriptBlock)Value;
+            }
+
+            if (Match != null)
+            {
+                matchRegex = new System.Text.RegularExpressions.Regex(Match, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                matchGroupNames = matchRegex.GetGroupNames();
             }
         }
 
@@ -82,8 +93,29 @@ namespace DataSharp
             }
             else if (whereIsString)
             {
+                setValue = false;
                 var whereProperty = newInputObject.Properties[whereAsString];
-                setValue = whereProperty != null && LanguagePrimitives.IsTrue(whereProperty.Value);
+                if (Match != null && whereProperty != null && whereProperty.Value != null)
+                {
+                    var matchResult = matchRegex.Match(whereProperty.Value.ToString();
+                    setValue = matchResult.Success;
+                    Hashtable matches = new Hashtable(StringComparer.CurrentCultureIgnoreCase);
+                    foreach (string groupName in matchGroupNames)
+                    {
+                        System.Text.RegularExpressions.Group g = matchResult.Groups[groupName];
+                        if (g.Success)
+                        {
+                            int keyInt;
+                            if (Int32.TryParse(groupName, out keyInt))
+                                matches.Add(keyInt, g.ToString());
+                            else
+                                matches.Add(groupName, g.ToString());
+                        }
+                    }
+                    matchVar.Value = matches;
+                }
+                else
+                    setValue = whereProperty != null && LanguagePrimitives.IsTrue(whereProperty.Value);
             }
             if (!setValue)
             {
