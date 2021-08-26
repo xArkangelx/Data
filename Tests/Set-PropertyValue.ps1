@@ -244,6 +244,18 @@ foreach ($value in $true, $false)
         $dataSet | Set-PropertyValue A { 1 }
     }
 
+    $tests.WhereProperty = Measure-Command {
+        $dataSet | Set-PropertyValue A 1 -Where Value
+    }
+
+    $tests.WhereScript = Measure-Command {
+        $dataSet | Set-PropertyValue A 1 -Where { $true }
+    }
+
+    $tests.WhereMatch = Measure-Command {
+        $dataSet | Set-PropertyValue A 1 -Where Name -Match "(\d+)"
+    }
+
     $compiledTests[$value] = [pscustomobject]$tests
 }
 
