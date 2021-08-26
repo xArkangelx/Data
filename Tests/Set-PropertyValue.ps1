@@ -1,7 +1,16 @@
-﻿foreach ($value in $true, $false)
+﻿Param ([switch]$VisualStudioDebug)
+
+foreach ($value in $true, $false)
 {
-    $Global:191cf922f94e46709f6b1818ae32f66b_ForceLoadPowerShellCmdlets = $value
-    Import-Module $PSScriptRoot\.. -DisableNameChecking -Force
+    if ($VisualStudioDebug)
+    {
+        Import-Module ".\DataSharp.dll"
+    }
+    else
+    {
+        $Global:191cf922f94e46709f6b1818ae32f66b_ForceLoadPowerShellCmdlets = $value
+        Import-Module $PSScriptRoot\.. -DisableNameChecking -Force
+    }
 
     Describe "Set-PropertyValue" {
 
@@ -126,6 +135,22 @@
                     ForEach-Object B |
                     Should Be $null
             }
+
+            It "-JoinWith Single Value" {
+                [pscustomobject]@{A=1} |
+                    Set-PropertyValue B { 1 } -JoinWith '+' |
+                    ForEach-Object B |
+                    Should Be '1'
+            }
+
+            It "-JoinWith Multi Value" {
+                [pscustomobject]@{A=1} |
+                    Set-PropertyValue B { 1, 2, 3 } -JoinWith '+' |
+                    ForEach-Object B |
+                    Should Be '1+2+3'
+            }
         }
     }
+
+    if ($VisualStudioDebug) { return }
 }

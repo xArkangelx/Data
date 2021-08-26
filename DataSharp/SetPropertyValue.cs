@@ -29,6 +29,9 @@ namespace DataSharp
         [Parameter()]
         public SwitchParameter NoClone { get; set; }
 
+        [Parameter()]
+        public string JoinWith { get; set; }
+
         private bool whereIsScriptBlock = false;
         private ScriptBlock whereAsScriptBlock;
 
@@ -94,12 +97,23 @@ namespace DataSharp
                 var varList = new List<PSVariable>();
                 varList.Add(new PSVariable("_", InputObject));
                 varList.Add(matchVar);
-                newValue = valueAsScriptBlock.InvokeWithContext(null, varList, null).Cast<object>();
+                var scriptResult = valueAsScriptBlock.InvokeWithContext(null, varList, null);
+                if (scriptResult.Count == 1)
+                    newValue = scriptResult[0];
+                else
+                    newValue = scriptResult;
             }
             foreach (string property in Property)
             {
                 if (!IfUnset.IsPresent || Helpers.IsPropertyNullOrWhiteSpace(newInputObject, property))
+                {
+                    if (JoinWith != null)
+                    {
+                        var enumValue = LanguagePrimitives.ConvertTo<string[]>(newValue);
+                        newValue = string.Join(JoinWith, enumValue);
+                    }
                     newInputObject.Properties.Add(new PSNoteProperty(property, newValue));
+                }
             }
 
             WriteObject(newInputObject);

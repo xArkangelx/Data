@@ -1682,20 +1682,24 @@ Function Set-PropertyValue
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
         [Parameter(Position=1)] [object] $Value,
+        [Parameter()] [string] $JoinWith,
         [Parameter()] [object] $Where,
         [Parameter()] [switch] $IfUnset,
         [Parameter()] [switch] $NoClone
     )
     Process
     {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+
         if ($NoClone) { $newInputObject = [Rhodium.Data.DataHelpers]::EnsureHasProperties($InputObject, $Property) }
         else { $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property) }
+
         $setValue = $true
         $matchVar = [PSVariable]::new('Matches')
         if ($Where -is [scriptblock])
         {
-            $varList = New-Object System.Collections.Generic.List[PSVariable]
-            $varList.Add((New-Object PSVariable "_", $InputObject))
+            $varList = [System.Collections.Generic.List[PSVariable]]::new()
+            $varList.Add([PSVariable]::new("_", $InputObject))
             $varList.Add($matchVar)
             $whereResult = $Where.InvokeWithContext($null, $varList, $null)
             $setValue = [System.Management.Automation.LanguagePrimitives]::IsTrue($whereResult)
@@ -1704,19 +1708,23 @@ Function Set-PropertyValue
         {
             $setValue = [System.Management.Automation.LanguagePrimitives]::IsTrue($newInputObject."$Where")
         }
+
         if (!$setValue) { return $newInputObject }
+
         $newValue = $Value
         if ($Value -is [ScriptBlock])
         {
-            $varList = New-Object System.Collections.Generic.List[PSVariable]
-            $varList.Add((New-Object PSVariable "_", $InputObject))
+            $varList = [System.Collections.Generic.List[PSVariable]]::new()
+            $varList.Add([PSVariable]::new("_", $InputObject))
             $varList.Add($matchVar)
             $newValue = foreach ($item in $Value.InvokeWithContext($null, $varList, $null)) { $item }
         }
+
         foreach ($prop in $Property)
         {
             if (!$IfUnset -or [String]::IsNullOrWhiteSpace($newInputObject.$prop))
             {
+                if ($JoinWith) { $newValue = $newValue -join $JoinWith }
                 $newInputObject.$prop = $newValue
             }
         }
