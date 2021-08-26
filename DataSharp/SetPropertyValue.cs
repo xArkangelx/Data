@@ -97,7 +97,7 @@ namespace DataSharp
                 var whereProperty = newInputObject.Properties[whereAsString];
                 if (Match != null && whereProperty != null && whereProperty.Value != null)
                 {
-                    var matchResult = matchRegex.Match(whereProperty.Value.ToString();
+                    var matchResult = matchRegex.Match(whereProperty.Value.ToString());
                     setValue = matchResult.Success;
                     Hashtable matches = new Hashtable(StringComparer.CurrentCultureIgnoreCase);
                     foreach (string groupName in matchGroupNames)
