@@ -66,6 +66,7 @@ namespace Rhodium.Data
 
 Function Group-Denormalized
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -263,6 +264,7 @@ Function Group-Denormalized
 
 Function Group-Pivot
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -324,6 +326,7 @@ Function Group-Pivot
 
 Function Join-GroupCount
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -351,6 +354,7 @@ Function Join-GroupCount
 
 Function Join-GroupHeaderRow
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -399,6 +403,7 @@ Function Join-GroupHeaderRow
 
 Function Join-List
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -561,6 +566,7 @@ Function Join-List
 
 Function Join-Index
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -651,6 +657,7 @@ Function Join-MissingSetCounts
 
 Function Join-Percentage
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -682,6 +689,7 @@ Function Join-Percentage
 
 Function Join-PropertySetComparison
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -770,6 +778,7 @@ Function Join-PropertySetComparison
 
 Function Join-TotalRow
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -912,6 +921,7 @@ Function Expand-Property
 if (!$Script:LoadedDataSharp) {
 Function Rename-Property
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -962,6 +972,7 @@ Function Rename-Property
 
 Function ConvertTo-Dictionary
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1004,6 +1015,7 @@ Function ConvertTo-Dictionary
 
 Function Convert-DateTimeZone
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(Position=0, Mandatory=$true, ParameterSetName='Value')] [DateTime] $DateTime,
@@ -1139,6 +1151,7 @@ Function Convert-DateTimeZone
 
 Function Select-DuplicatePropertyValue
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1170,6 +1183,7 @@ Function Select-DuplicatePropertyValue
 
 Function Select-Excluding
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1199,6 +1213,7 @@ Function Select-Excluding
 
 Function Select-Including
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1228,6 +1243,7 @@ Function Select-Including
 
 Function Invoke-PipelineThreading
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object[]] $InputObject,
@@ -1327,6 +1343,7 @@ Function Invoke-PipelineThreading
 
 Function Write-PipelineProgress
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1368,6 +1385,7 @@ Function Write-PipelineProgress
 
 Function Set-PropertyOrder
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1470,6 +1488,7 @@ Function Set-PropertyDateFloor
 
 Function Set-PropertyDateTimeBreakpoint
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1571,6 +1590,7 @@ Function Set-PropertyDateTimeBreakpoint
 
 Function Set-PropertyDateTimeFormat
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1623,6 +1643,7 @@ Function Set-PropertyDateTimeFormat
 
 Function Set-PropertyType
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1753,6 +1774,7 @@ Function Set-PropertyValue
 
 Function Set-PropertyJoinValue
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1772,6 +1794,7 @@ Function Set-PropertyJoinValue
 
 Function Set-PropertySplitValue
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1791,6 +1814,7 @@ Function Set-PropertySplitValue
 
 Function Get-FormattedXml
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true, Position=0)] [string[]] $XmlText
@@ -1818,6 +1842,7 @@ Function Get-FormattedXml
 
 Function Get-Sentences
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true, Position=0)] [string] $Text
@@ -1834,6 +1859,7 @@ Function Get-Sentences
 
 Function Get-StringHash
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(Mandatory=$true, Position=0)] [string] $String,
@@ -1852,6 +1878,7 @@ Function Get-StringHash
 
 Function Get-UnindentedText
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true, Position=0)] [string[]] $Text
@@ -1879,6 +1906,7 @@ Function Get-UnindentedText
 
 Function Get-Weekday
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(Position=0,ValueFromPipeline=$true)] [datetime] $Date = [DateTime]::Now,
@@ -1922,6 +1950,7 @@ Function Get-Weekday
 
 Function ConvertTo-Object
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -1996,6 +2025,7 @@ Function Sort-ByPropertyValue
 
 Function Select-UniformProperty
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject
@@ -2024,6 +2054,7 @@ Function Select-UniformProperty
 
 Function Assert-Count
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
@@ -2053,6 +2084,7 @@ Function Assert-Count
 
 Function Compress-PlainText
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(Position=0, ValueFromPipeline=$true)] [string] $Text,
@@ -2080,6 +2112,7 @@ Function Compress-PlainText
 
 Function Expand-PlainText
 {
+    [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ParameterSetName='Bytes', Position=0)] [byte[]] $CompressedBytes,
