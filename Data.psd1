@@ -105,6 +105,7 @@ FunctionsToExport = @(
     'Select-DuplicatePropertyValue'
     'Select-Excluding'
     'Select-Including'
+    'Invoke-PipelineChunks'
     'Invoke-PipelineThreading'
     'Write-PipelineProgress'
     'Set-PropertyOrder'

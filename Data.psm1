@@ -1241,6 +1241,63 @@ Function Select-Including
     }
 }
 
+Function Invoke-PipelineChunks
+{
+    <#
+    .SYNOPSIS
+    Breaks pipeline input objects into chunks of a specific size and executes a script block for each chunk.
+
+    .PARAMETER InputObject
+    The objects to break into chunks. Can be passed as a named parameter as well as via pipeline input.
+
+    .PARAMETER ChunkSize
+    The size of the chunks to break objects into.
+
+    .PARAMETER ScriptBlock
+    The scriptblock to execute for each chunk. Use the $input variable to access the objects.
+
+    .EXAMPLE
+    Get-Content ServerList.txt | Invoke-PipelineChunks 25 { Invoke-Command $input { $env:ComputerName } }
+
+    .EXAMPLE
+    Invoke-PipelineChunks -InputObject (1..10) -ChunkSize 7 -ScriptBlock { $input -join '+' }
+    #>
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object[]] $InputObject,
+        [Parameter(Position=0,Mandatory=$true)] [int] $ChunkSize,
+        [Parameter(Position=1,Mandatory=$true)] [scriptblock] $ScriptBlock
+    )
+    Begin
+    {
+        $private:chunkList = [System.Collections.Generic.LinkedList[object]]::new()
+    }
+    Process
+    {
+        foreach ($inputObjectItem in $InputObject)
+        {
+            $private:chunkList.Add($inputObjectItem)
+            if ($private:chunkList.Count -ge $ChunkSize)
+            {
+                $private:varList = [System.Collections.Generic.List[PSVariable]]::new()
+                $private:varList.Add([PSVariable]::new('input', $private:chunkList))
+                $ScriptBlock.InvokeWithContext($null, $private:varList, $null)
+                $private:chunkList = [System.Collections.Generic.LinkedList[object]]::new()
+            }
+        }
+    }
+    End
+    {
+        if ($private:chunkList.Count)
+        {
+            $private:varList = [System.Collections.Generic.List[PSVariable]]::new()
+            $private:varList.Add([PSVariable]::new('input', $private:chunkList))
+            $ScriptBlock.InvokeWithContext($null, $private:varList, $null)
+        }
+    }
+}
+
 Function Invoke-PipelineThreading
 {
     [CmdletBinding(PositionalBinding=$false)]
