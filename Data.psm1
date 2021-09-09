@@ -1329,6 +1329,9 @@ Function Invoke-PipelineChunks
     .PARAMETER ChunkSize
     The size of the chunks to break objects into.
 
+    .PARAMETER SingleChunk
+    Collect the entire pipeline into a single chunk. Useful for self joins.
+
     .PARAMETER ScriptBlock
     The scriptblock to execute for each chunk. Use the $input variable to access the objects.
 
@@ -1338,22 +1341,26 @@ Function Invoke-PipelineChunks
     .EXAMPLE
     Invoke-PipelineChunks -InputObject (1..10) -ChunkSize 7 -ScriptBlock { $input -join '+' }
     #>
-    [CmdletBinding(PositionalBinding=$false)]
+    [CmdletBinding(PositionalBinding=$false,DefaultParameterSetName='ChunkSize')]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object[]] $InputObject,
-        [Parameter(Position=0,Mandatory=$true)] [int] $ChunkSize,
-        [Parameter(Position=1,Mandatory=$true)] [scriptblock] $ScriptBlock
+        [Parameter(Position=0,Mandatory=$true,ParameterSetName='ChunkSize')] [int] $ChunkSize,
+        [Parameter(Position=1,Mandatory=$true,ParameterSetName='ChunkSize')]
+            [Parameter(Position=0,Mandatory=$true,ParameterSetName='SingleChunk')] [scriptblock] $ScriptBlock,
+        [Parameter(ParameterSetName='SingleChunk')] [switch] $SingleChunk
     )
     Begin
     {
         $private:chunkList = [System.Collections.Generic.LinkedList[object]]::new()
+        $private:singleMode = $PSCmdlet.ParameterSetName -eq 'SingleChunk'
     }
     Process
     {
         foreach ($inputObjectItem in $InputObject)
         {
             $private:chunkList.Add($inputObjectItem)
+            if ($private:singleMode) { continue }
             if ($private:chunkList.Count -ge $ChunkSize)
             {
                 $private:varList = [System.Collections.Generic.List[PSVariable]]::new()

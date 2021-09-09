@@ -19,5 +19,11 @@ Describe "Invoke-PipelineChunks" {
             $result[0] | Should Be '1,2,3,4,5,6,7'
             $result[1] | Should Be '8,9,10'
         }
+
+        It 'Works with SingleChunk switch' {
+            $result = 1..10 | Invoke-PipelineChunks -SingleChunk { $input -join ',' }
+            @($result).Count | Should Be 1
+            $result | Should Be '1,2,3,4,5,6,7,8,9,10'
+        }
     }
 }
