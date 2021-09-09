@@ -354,19 +354,69 @@ Function Join-GroupCount
 
 Function Join-GroupHeaderRow
 {
+    <#
+    .SYNOPSIS
+    Groups and inserts header (or footer) objects into a pipeline with options to subtotal, label or extract values from the group.
+
+    .PARAMETER InputObject
+    The objects to add header rows to.
+
+    .PARAMETER Property
+    The properties to group objects by.
+
+    .PARAMETER ObjectScript
+    Execute this script for each group ($input variable) and add the results to the header object. Results can be an object or a hashtable.
+
+    .PARAMETER AsFooter
+    Insert the new object after the group instead of before the group.
+
+    .PARAMETER SkipSingles
+    Don't insert a header if the group has a single item.
+
+    .PARAMETER Set
+    Manually set these properties to these values.
+
+    .PARAMETER KeepFirst
+    Automatically add the first value of these properties to the header of each group.
+
+    .PARAMETER Subtotal
+    Sum up the values of these properties and include them on the new row.
+
+    .PARAMETER KeyJoin
+    Objects are grouped as though their values were strings; join them with this value when making the key for each group.
+
+    .EXAMPLE
+    Get-Process |
+        Select-Object Name, WorkingSet |
+        Join-GroupHeaderRow Name { @{Name="$($input[0].Name)-Total"} } -Subtotal WorkingSet -AsFooter -SkipSingles
+
+    .EXAMPLE
+    Get-ChildItem C:\Windows -File |
+        Select-Object Name, Extension, Length, Count |
+        Join-GroupHeaderRow Extension {
+            [pscustomobject]@{
+                Name = "[ Average ]"
+                Length = ($input.Length | Measure-Object -Average).Average
+                Count = $input.Count
+            }
+        }
+    #>
     [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
-        [Parameter(Position=0, Mandatory=$true)] [string] $Property,
-        [Parameter(Position=1, Mandatory=$true)] [ScriptBlock] $ObjectScript,
+        [Parameter(Position=0, Mandatory=$true)] [string[]] $Property,
+        [Parameter(Position=1)] [scriptblock] $ObjectScript,
+        [Parameter()] [switch] $AsFooter,
+        [Parameter()] [switch] $SkipSingles,
+        [Parameter()] [hashtable] $Set,
         [Parameter()] [string[]] $KeepFirst,
         [Parameter()] [string[]] $Subtotal,
-        [Parameter()] [switch] $AsFooter
+        [Parameter()] [string] $KeyJoin = '|'
     )
     Begin
     {
-        $inputObjectList = New-Object System.Collections.Generic.List[object]
+        $inputObjectList = [System.Collections.Generic.List[object]]::new()
     }
     Process
     {
@@ -375,28 +425,54 @@ Function Join-GroupHeaderRow
     }
     End
     {
-        $groupList = $inputObjectList | Group-Object $Property
-        foreach ($group in $groupList)
+        $firstPropertyDict = @{}
+        $sumPropertyDict = @{}
+        foreach ($p in $Property) { $firstPropertyDict[$p] = $true }
+        foreach ($p in $KeepFirst) { $firstPropertyDict[$p] = $true }
+        foreach ($p in $Subtotal) { $sumPropertyDict[$p] = $true }
+        $groupDict = $inputObjectList | ConvertTo-Dictionary -Ordered -Keys $Property -KeyJoin $KeyJoin
+        foreach ($pair in $groupDict.GetEnumerator())
         {
-            $propertyList = $group.Group[0].PSObject.Properties.Name
-            $variables = New-Object PSVariable "Group", @($group.Group)
-            $newObject = New-Object PSCustomObject -Property $ObjectScript.InvokeWithContext($null, $variables, $null)[0] |
-                Select-Object $propertyList
-
-            foreach ($subtotalProperty in $Subtotal)
+            if ($SkipSingles -and $pair.Value.Count -eq 1)
             {
-                $sum = $group.Group | Measure-Object -Sum $subtotalProperty | ForEach-Object Sum
-                $newObject.$subtotalProperty = $sum
+                $pair.Value
+                continue
             }
 
-            foreach ($keepFirstProperty in $KeepFirst)
+            $firstObject = $pair.Value[0]
+            $propertyList = $firstObject.PSObject.Properties.Name
+            $newObject = [ordered]@{}
+            foreach ($p in $propertyList)
             {
-                $newObject.$keepFirstProperty = $group.Group[0].$firstProperty
+                $newObject[$p] = if ($firstPropertyDict[$p]) { $firstObject.$p }
+                elseif ($sumPropertyDict[$p]) { ($pair.Value | Measure-Object $p -Sum).Sum }
             }
 
-            if ($AsFooter) { $group.Group }
-            $newObject
-            if (!$AsFooter) { $group.Group }
+            if ($Set)
+            {
+                foreach ($setPair in $Set.GetEnumerator())
+                {
+                    $newObject[$setPair.Key] = $setPair.Value
+                }
+            }
+
+            if ($AsFooter) { $pair.Value }
+
+            if ($ObjectScript)
+            {
+                $variableList = [System.Collections.Generic.List[PSVariable]]::new()
+                $variableList.Add([PSVariable]::new('input', $pair.Value))
+                $result = [pscustomobject]$ObjectScript.InvokeWithContext($null, $variableList, $null)[0]
+
+                foreach ($psProperty in $result.PSObject.Properties)
+                {
+                    $newObject[$psProperty.Name] = $psProperty.Value
+                }
+            }
+
+            [pscustomobject]$newObject
+
+            if (!$AsFooter) { $pair.Value }
         }
     }
 }
