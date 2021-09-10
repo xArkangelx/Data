@@ -135,6 +135,7 @@ namespace DataSharp
                 else
                     newValue = scriptResult;
             }
+
             foreach (string property in Property)
             {
                 if (!IfUnset.IsPresent || Helpers.IsPropertyNullOrWhiteSpace(newInputObject, property))
