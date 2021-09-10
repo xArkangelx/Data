@@ -1781,6 +1781,151 @@ Function Set-PropertyDateTimeFormat
     }
 }
 
+Function Set-PropertyMultiValue
+{
+    <#
+    .SYNOPSIS
+    Adds one or more properties from a hashtable, ordered dictionary, scriptblock or child object of the input object.
+
+    .PARAMETER InputObject
+    The objects to add properties to.
+
+    .PARAMETER Values
+    A hashtable/ordered dictionary of properties to add, or a foreach scriptblock producing objects/hashtables with properties to add, or the name of a child object with properties to add.
+    Arrays return multiple new objects.
+
+    .PARAMETER KeepProperty
+    A specific list of properties set/produced from the Values parameter to add; and ensure these properties are always on the resulting objects.
+
+    .PARAMETER KeepInputProperty
+
+    .PARAMETER ExcludeProperty
+    Exclude these properties from the resulting objects (whether they came from the source or were just added).
+
+    .EXAMPLE
+    Get-Process |
+        Select-Object Name |
+        Set-PropertyMultiValue @{Type='Process'; State='Running'}
+
+    .EXAMPLE
+    Get-Service |
+        Set-PropertyMultiValue -KeepInputProperty Name -KeepProperty DependentName {
+            foreach ($d in $_.DependentServices)
+            {
+                [pscustomobject]@{
+                    DependentName = $d.Name
+                }
+            }
+        }
+
+    .EXAMPLE
+    Get-ChildItem C:\Windows -File |
+        Select-Object Name, VersionInfo |
+        Set-PropertyMultiValue VersionInfo -KeepProperty FileVersion, ProductVersion -ExcludeProperty VersionInfo
+    #>
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true, Position=0)] [object] $Values,
+        [Parameter()] [string[]] $KeepProperty,
+        [Parameter()] [string[]] $KeepInputProperty,
+        [Parameter()] [string[]] $ExcludeProperty
+    )
+    Begin
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+        
+        $isScript = $isDict = $isString = $false
+        
+        if ($Values -is [scriptblock]) { $isScript = $true }
+        elseif ($Values -is [System.Collections.IDictionary]) { $isDict = $true }
+        elseif ($Values -is [string]) { $isString = $true }
+        else { throw "Values must be a scriptblock, child property name or hashtable/ordered dictionary." }
+        
+        $keepPropertyDict = @{}
+        $hasKeepProperty = !!$KeepProperty
+        if ($KeepProperty) { foreach ($p in $KeepProperty) { $keepPropertyDict[$p] = $true } }
+
+        $hasKeepInputProperty = !!$KeepInputProperty
+
+        $excludePropertyDict = @{}
+        $hasExcludeProperty = !!$ExcludeProperty
+        if ($ExcludeProperty) { foreach ($p in $ExcludeProperty) { $excludePropertyDict[$p] = $true } }
+    }
+    Process
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+
+        $baseInputObject = $InputObject
+        if ($hasKeepInputProperty)
+        {
+            $temp = [ordered]@{}
+            foreach ($p in $KeepInputProperty)
+            {
+                $temp[$p] = $InputObject.$p
+            }
+            $baseInputObject = [pscustomobject]$temp
+        }
+
+        $newInputObjectList = if ($isDict)
+        {
+            $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($baseInputObject, $KeepProperty)
+            foreach ($pair in $Values.GetEnumerator())
+            {
+                if ($hasKeepProperty -and !$keepPropertyDict[$pair.Key]) { continue }
+                $newInputObject.PSObject.Properties.Add([psnoteproperty]::new($pair.Key, $pair.Value))
+            }
+            $newInputObject
+        }
+        else
+        {
+            if ($isString)
+            {
+                $newValueList = foreach ($item in $InputObject."$Values") { if ($item) { [pscustomobject]$item } }
+            }
+            elseif ($isScript)
+            {
+                $varList = [System.Collections.Generic.List[PSVariable]]::new()
+                $varList.Add([PSVariable]::new("_", $InputObject))
+                $newValueList = foreach ($item in $Values.InvokeWithContext($null, $varList, $null)) { [pscustomobject]$item }
+            }
+            else
+            {
+                throw "Unhandled type."
+            }
+
+            foreach ($newValue in $newValueList)
+            {
+                $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($baseInputObject, $KeepProperty)
+                foreach ($prop in $newValue.PSObject.Properties)
+                {
+                    if ($hasKeepProperty -and !$keepPropertyDict[$prop.Name]) { continue }
+                    $newInputObject.PSObject.Properties.Add([psnoteproperty]::new($prop.Name, $prop.Value))
+                }
+                $newInputObject
+            }
+
+            if (!@($newValueList).Count)
+            {
+                [Rhodium.Data.DataHelpers]::CloneObject($baseInputObject, $KeepProperty)
+            }
+        }
+
+        foreach ($newInputObject in $newInputObjectList)
+        {
+            if ($hasExcludeProperty)
+            {
+                foreach ($prop in @($newInputObject.PSObject.Properties))
+                {
+                    if ($excludePropertyDict[$prop.Name]) { $newInputObject.PSObject.Properties.Remove($prop.Name) }
+                }
+            }
+            $newInputObject
+        }
+    }
+}
+
 Function Set-PropertyType
 {
     [CmdletBinding(PositionalBinding=$false)]
