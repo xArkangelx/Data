@@ -161,12 +161,12 @@ Describe "Join-List" {
             @($result).Count | Should Be 2
             
             $result[0].PSObject.Properties.Name -join '+' | Should Be 'A+B+M'
-            $result[0].A | Should be 1
+            $result[0].A | Should Be 1
             $result[0].B | Should Be $null
             $result[0].M | Should Be $null
 
             $result[1].PSObject.Properties.Name -join '+' | Should Be 'A+B+M'
-            $result[1].A | Should be 2
+            $result[1].A | Should Be 2
             $result[1].B | Should Be -1
             $result[1].M | Should Be $true
         }
@@ -178,14 +178,31 @@ Describe "Join-List" {
             @($result).Count | Should Be 2
             
             $result[1].PSObject.Properties.Name -join '+' | Should Be 'A+B+M'
-            $result[0].A | Should be 1
+            $result[0].A | Should Be 1
             $result[0].B | Should Be $null
             $result[0].M | Should Be $false
 
             $result[1].PSObject.Properties.Name -join '+' | Should Be 'A+B+M'
-            $result[1].A | Should be 2
+            $result[1].A | Should Be 2
             $result[1].B | Should Be -1
             $result[1].M | Should Be $null
+        }
+
+        It "Sets values on unmatched right objects" {
+            $result = [pscustomobject]@{A=1} |
+                Join-List A ([pscustomobject]@{A=2;B=-1}) -SetOnUnmatched @{M=$false} -IncludeUnmatchedRight
+
+            @($result).Count | Should Be 2
+            
+            $result[1].PSObject.Properties.Name -join '+' | Should Be 'A+B+M'
+            $result[0].A | Should Be 1
+            $result[0].B | Should Be $null
+            $result[0].M | Should Be $false
+
+            $result[1].PSObject.Properties.Name -join '+' | Should Be 'A+B+M'
+            $result[1].A | Should Be 2
+            $result[1].B | Should Be -1
+            $result[1].M | Should Be $false
         }
 
         It "Keeps order" {

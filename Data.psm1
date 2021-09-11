@@ -664,10 +664,19 @@ Function Join-List
                         $propertyName = $keepPropertyDict[$propertyName]
                     }
 
-                    if ($overwriteMode -eq 'Never' -and $newObject.Contains($newName)) { continue }
+                    if ($overwriteMode -eq 'Never' -and $newObject.Contains($propertyName)) { continue }
 
                     $newObject[$propertyName] = $joinProperty.Value
                 }
+
+                if ($hasSetProperty)
+                {
+                    foreach ($propertyName in $setPropertyHash.GetEnumerator())
+                    {
+                        $newObject[$propertyName] = $setOnUnmatchedValues[$propertyName]
+                    }
+                }
+
                 [pscustomobject]$newObject
                 if ($FirstRightOnly) { break }
             }
