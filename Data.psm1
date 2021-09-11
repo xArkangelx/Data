@@ -1781,7 +1781,7 @@ Function Set-PropertyDateTimeFormat
     }
 }
 
-Function Set-PropertyMultiValue
+Function Join-PropertyMultiValue
 {
     <#
     .SYNOPSIS
@@ -1805,11 +1805,11 @@ Function Set-PropertyMultiValue
     .EXAMPLE
     Get-Process |
         Select-Object Name |
-        Set-PropertyMultiValue @{Type='Process'; State='Running'}
+        Join-PropertyMultiValue @{Type='Process'; State='Running'}
 
     .EXAMPLE
     Get-Service |
-        Set-PropertyMultiValue -KeepInputProperty Name -KeepProperty DependentName {
+        Join-PropertyMultiValue -KeepInputProperty Name -KeepProperty DependentName {
             foreach ($d in $_.DependentServices)
             {
                 [pscustomobject]@{
@@ -1821,7 +1821,7 @@ Function Set-PropertyMultiValue
     .EXAMPLE
     Get-ChildItem C:\Windows -File |
         Select-Object Name, VersionInfo |
-        Set-PropertyMultiValue VersionInfo -KeepProperty FileVersion, ProductVersion -ExcludeProperty VersionInfo
+        Join-PropertyMultiValue VersionInfo -KeepProperty FileVersion, ProductVersion -ExcludeProperty VersionInfo
     #>
     [CmdletBinding(PositionalBinding=$false)]
     Param
