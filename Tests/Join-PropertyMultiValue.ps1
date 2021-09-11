@@ -208,4 +208,38 @@ Describe "Join-PropertyMultiValue" {
             $result.B | Should Be 2
         }
     }
+
+    Context "NoEmptyResults" {
+        
+        It "Filters objects that don't have results" {
+            $resultList = [pscustomobject]@{A=1}, [pscustomobject]@{A=2}, [pscustomobject]@{A=3} |
+                Join-PropertyMultiValue -NoEmptyResults {
+                    if ($_.A -eq 1) { @{V='A'} }
+                    elseif ($_.A -eq 2) { }
+                    elseif ($_.A -eq 3) { @{V='B'}, @{V='C'} }
+                }
+
+            @($resultList).Count | Should Be 3
+
+            $resultList[0].A | Should Be 1
+            $resultList[0].V | Should Be A
+
+            $resultList[1].A | Should Be 3
+            $resultList[1].V | Should Be B
+
+            $resultList[2].A | Should Be 3
+            $resultList[2].V | Should Be C
+        }
+
+        It "Can't filter empty results if Values is a dictionary." {
+            $exception = try
+            {
+                [pscustomobject]@{A=1} |
+                    Join-PropertyMultiValue -NoEmptyResults -Values @{B=1} |
+                    Out-Null
+            } catch { $_ }
+
+            $exception | Should Match "NoEmptyResults can't be provided when Values is a dictionary"
+        }
+    }
 }

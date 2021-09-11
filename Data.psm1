@@ -1798,9 +1798,13 @@ Function Join-PropertyMultiValue
     A specific list of properties set/produced from the Values parameter to add; and ensure these properties are always on the resulting objects.
 
     .PARAMETER KeepInputProperty
+    Keep only these properties on the input objects.
 
     .PARAMETER ExcludeProperty
     Exclude these properties from the resulting objects (whether they came from the source or were just added).
+
+    .PARAMETER NoEmptyResults
+    Don't return any input objects if the scriptblock results are empty.
 
     .EXAMPLE
     Get-Process |
@@ -1830,7 +1834,8 @@ Function Join-PropertyMultiValue
         [Parameter(Mandatory=$true, Position=0)] [object] $Values,
         [Parameter()] [string[]] $KeepProperty,
         [Parameter()] [string[]] $KeepInputProperty,
-        [Parameter()] [string[]] $ExcludeProperty
+        [Parameter()] [string[]] $ExcludeProperty,
+        [Parameter()] [switch] $NoEmptyResults
     )
     Begin
     {
@@ -1852,6 +1857,8 @@ Function Join-PropertyMultiValue
         $excludePropertyDict = @{}
         $hasExcludeProperty = !!$ExcludeProperty
         if ($ExcludeProperty) { foreach ($p in $ExcludeProperty) { $excludePropertyDict[$p] = $true } }
+
+        if ($isDict -and $NoEmptyResults) { throw "NoEmptyResults can't be provided when Values is a dictionary." }
     }
     Process
     {
@@ -1906,7 +1913,7 @@ Function Join-PropertyMultiValue
                 $newInputObject
             }
 
-            if (!@($newValueList).Count)
+            if (!$NoEmptyResults.IsPresent -and !@($newValueList).Count)
             {
                 [Rhodium.Data.DataHelpers]::CloneObject($baseInputObject, $KeepProperty)
             }
