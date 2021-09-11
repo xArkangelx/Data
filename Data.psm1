@@ -1824,11 +1824,61 @@ Function Set-PropertyDateFloor
 
 Function Set-PropertyDateTimeBreakpoint
 {
+    <#
+    .SYNOPSIS
+    Adds a text label of timespan or datetime (age of a timestamp as a timespan) describing how old/large it is for summarizing a wide range of times.
+
+    .PARAMETER InputObject
+    The objects to add the breakpoint label to.
+
+    .PARAMETER Property
+    The properties containing timespan or datetime values.
+
+    .PARAMETER ToNewProperty
+    Save the breakpoint labels to a new property instead of overwriting the existing property.
+
+    .PARAMETER Minutes
+    The minute breakpoints to use.
+
+    .PARAMETER Hours
+    The hour breakpoints to use.
+
+    .PARAMETER Days
+    The day (24 hours) breakpoints to use.
+
+    .PARAMETER Weeks
+    The week (7 days) breakpoints to use.
+
+    .PARAMETER Months
+    The month breakpoints to use.
+
+    .PARAMETER Years
+    The year breakpoints to use.
+
+    .PARAMETER TeePossibleValues
+    Create a variable in the parent scope with this name, containing the values of all the breakpoints that could have been set.
+
+    .EXAMPLE
+    Get-ChildItem C:\Windows |
+        Select-Object Name, LastWriteTime |
+        Sort-Object LastWriteTime |
+        Set-PropertyDateTimeBreakpoint LastWriteTime -ToNewProperty LastWriteTimeBreakpoint -Hours 12 -Days 1, 2 -Weeks 1, 2 -Months 1, 2, 6 -Years 1, 2, 3
+
+    .EXAMPLE
+    Get-Process |
+        Where-Object StartTime |
+        Select-Object Name, StartTime |
+        Set-PropertyDateTimeBreakpoint StartTime -Minutes 1, 5, 15, 30, 45 -Hours (1..23) -Days 1, 2, 3 -TeePossibleValues StartTimeValues |
+        Group-Object StartTime
+
+    $StartTimeValues
+
+    #>
     [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
-        [Parameter(Mandatory=$true)] [string[]] $Property,
+        [Parameter(Position=0,Mandatory=$true)] [string[]] $Property,
         [Parameter()] [string[]] $ToNewProperty,
         [Parameter()] [uint32[]] $Minutes,
         [Parameter()] [uint32[]] $Hours,
@@ -1842,7 +1892,7 @@ Function Set-PropertyDateTimeBreakpoint
     {
         trap { $PSCmdlet.ThrowTerminatingError($_) }
 
-        $breakpointList = New-Object System.Collections.Generic.List[object]
+        $breakpointList = [System.Collections.Generic.List[object]]::new()
 
         Function DefineBreakpoint([uint64]$Number, $Type, [uint64]$Multiplier)
         {
