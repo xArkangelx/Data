@@ -493,7 +493,9 @@ Function Join-List
         [Parameter()] [ValidateSet('Never', 'Always', 'IfNullOrEmpty', 'IfNewValueNotNullOrEmpty')] [string] $Overwrite = 'Never',
         [Parameter()] [switch] $OverwriteAll,
         [Parameter()] [switch] $OverwriteNull,
-        [Parameter()] [string] $KeyJoin = '|'
+        [Parameter()] [string] $KeyJoin = '|',
+        [Parameter()] [System.Collections.IDictionary] $SetOnMatched,
+        [Parameter()] [System.Collections.IDictionary] $SetOnUnmatched
     )
     Begin
     {
@@ -521,6 +523,21 @@ Function Join-List
                     throw "KeepProperty must contain strings or hashtables."
                 }
             }
+        }
+
+        $hasSetProperty = $false
+        if ($SetOnMatched -or $SetOnUnmatched)
+        {
+            $hasSetProperty = $true
+            $setPropertyHash = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::CurrentCultureIgnoreCase)
+
+            # What properties need to always be set (whether they're in one or both)
+            if ($SetOnMatched) { foreach ($pair in $SetOnMatched.GetEnumerator()) { [void]$setPropertyHash.Add($pair.Key) } }
+            if ($SetOnUnmatched) { foreach ($pair in $SetOnUnmatched.GetEnumerator()) { [void]$setPropertyHash.Add($pair.Key) } }
+
+            # Need these to be non-null in case only Matched/Unmatched is set
+            $setOnMatchedValues = if ($SetOnMatched) { $SetOnMatched } else { @{} }
+            $setOnUnmatchedValues = if ($SetOnUnmatched) { $SetOnUnmatched } else { @{} }
         }
 
         if (!$JoinKeys) { $JoinKeys = $InputKeys }
@@ -564,6 +581,15 @@ Function Join-List
                 }
                 $newObject[$propertyName] = $null
             }
+
+            if ($hasSetProperty)
+            {
+                foreach ($propertyName in $setPropertyHash.GetEnumerator())
+                {
+                    $newObject[$propertyName] = $setOnUnmatchedValues[$propertyName]
+                }
+            }
+
             [pscustomobject]$newObject
             return
         }
@@ -596,6 +622,15 @@ Function Join-List
 
                 $newObject[$newName] = $property.Value
             }
+
+            if ($hasSetProperty)
+            {
+                foreach ($propertyName in $setPropertyHash.GetEnumerator())
+                {
+                    $newObject[$propertyName] = $setOnMatchedValues[$propertyName]
+                }
+            }
+
             [pscustomobject]$newObject
             if ($FirstRightOnly) { break }
         }

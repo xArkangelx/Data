@@ -152,4 +152,95 @@ Describe "Join-List" {
             $result.Value | Should Be 'Old'
         }
     }
+
+    Context "Setting values on matches" {
+        It "Sets values on matches" {
+            $result = [pscustomobject]@{A=1}, [pscustomobject]@{A=2} |
+                Join-List A ([pscustomobject]@{A=2;B=-1}) -SetOnMatched @{M=$true}
+
+            @($result).Count | Should Be 2
+            
+            $result[0].PSObject.Properties.Name -join '+' | Should Be 'A+B+M'
+            $result[0].A | Should be 1
+            $result[0].B | Should Be $null
+            $result[0].M | Should Be $null
+
+            $result[1].PSObject.Properties.Name -join '+' | Should Be 'A+B+M'
+            $result[1].A | Should be 2
+            $result[1].B | Should Be -1
+            $result[1].M | Should Be $true
+        }
+
+        It "Sets values on failed matches" {
+            $result = [pscustomobject]@{A=1}, [pscustomobject]@{A=2} |
+                Join-List A ([pscustomobject]@{A=2;B=-1}) -SetOnUnmatched @{M=$false}
+
+            @($result).Count | Should Be 2
+            
+            $result[1].PSObject.Properties.Name -join '+' | Should Be 'A+B+M'
+            $result[0].A | Should be 1
+            $result[0].B | Should Be $null
+            $result[0].M | Should Be $false
+
+            $result[1].PSObject.Properties.Name -join '+' | Should Be 'A+B+M'
+            $result[1].A | Should be 2
+            $result[1].B | Should Be -1
+            $result[1].M | Should Be $null
+        }
+
+        It "Keeps order" {
+            $result = [pscustomobject]@{A=1} |
+                Join-List A ([pscustomobject]@{A=1;B=-1}) -SetOnUnmatched ([ordered]@{Y=1;Z=2;X=3})
+
+            $result[0].PSObject.Properties.Name -join '+' | Should Be 'A+B+Y+Z+X'
+        }
+    }
 }
+
+return
+
+# ================================================================================
+# Performance Reasonings
+
+# ================================================================================
+# Question: How long does it take to enumerate an empty hashset 100,000 times?
+# Why: To simplify the code so we don't have to test for the requirement
+$hashset = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::CurrentCultureIgnoreCase)
+
+Measure-Command {
+    for ($i = 0; $i -lt 100000; $i++)
+    {
+        foreach ($n in $hashset.GetEnumerator())
+        {
+            1/0
+        }
+    }
+}
+
+# Answer: ~200 ms
+
+# Followup: What about just an if count test?
+Measure-Command {
+    for ($i = 0; $i -lt 100000; $i++)
+    {
+        if ($hashset.Count)
+        {
+            1/0
+        }
+    }
+}
+
+# Followup: 100,000 if ($false) tests
+# Answer: ~200 ms
+Measure-Command {
+    for ($i = 0; $i -lt 100000; $i++)
+    {
+        if ($false)
+        {
+            1/0
+        }
+    }
+}
+
+# Answer: ~100 ms
+# Verdict: Save 100ms and use an if and separate boolean
