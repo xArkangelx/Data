@@ -961,11 +961,33 @@ Function Join-PropertyMultiValue
 
 Function Join-PropertySetComparison
 {
+    <#
+    .SYNOPSIS
+    Compares two properties on an input object that contain arrays of values for differences.
+
+    .EXAMPLE
+    $sampleData = @(
+        [pscustomobject]@{Label='Sample 1'; Before='A', 'B', 'C'; After='A', 'B', 'C'}
+        [pscustomobject]@{Label='Sample 2'; Before='A', 'B', 'C'; After='A', 'C'}
+        [pscustomobject]@{Label='Sample 3'; Before='A', 'C'; After='A', 'B', 'C'}
+        [pscustomobject]@{Label='Sample 4'; Before='A', 'B'; After='B', 'C'}
+    )
+
+    $sampleData |
+        Join-PropertySetComparison -BaseProperty Before -ComparisonProperty After -ResultProperty Result -SameDifferentMissingExtraValues '==', '!=', '<', '>'
+
+    .EXAMPLE
+    1..10 |
+        ForEach-Object {
+            [pscustomobject]@{Letters = 'A', 'B', 'C', 'D', 'E' | Get-Random -Count 3 }
+        } |
+        Join-PropertySetComparison Letters -ComparisonValues 'A', 'B', 'C' -MissingProperty LettersNotInABC -ExtraProperty ABCNotInLetters
+    #>
     [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
-        [Parameter(Mandatory=$true)] [string] $BaseProperty,
+        [Parameter(Mandatory=$true,Position=0)] [string] $BaseProperty,
         [Parameter(Mandatory=$true,ParameterSetName='ComparisonProperty')] [string] $ComparisonProperty,
         [Parameter(Mandatory=$true,ParameterSetName='ComparisonValues')] [object[]] $ComparisonValues,
         [Parameter()] [string] $ResultProperty,
