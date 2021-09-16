@@ -1443,6 +1443,76 @@ Function Convert-DateTimeZone
     }
 }
 
+Function Convert-PropertyEmptyValue
+{
+    <#
+    .SYNOPSIS
+    Converts empty values ($null, '', DBNull, whitespace) on objects to another value for cleaning up data.
+
+    .PARAMETER InputObject
+    The objects to convert empty properties on.
+
+    .PARAMETER Property
+    Specific properties to check. All properties are checked if not specified.
+
+    .PARAMETER ToNull
+    Convert empty values to $null.
+
+    .PARAMETER ToEmptyString
+    Convert empty values to an empty string.
+
+    .PARAMETER ToValue
+    Convert empty values to a specific value.
+
+    .EXAMPLE
+    Import-Csv ~\Path\To\File.csv | # Empty cells will default to ''
+        Convert-PropertyEmptyValue -ToNull
+
+    .EXAMPLE
+    Get-ChildItem C:\Windows |
+        Select-Object Name, Length |
+        Convert-PropertyEmptyValue Length -ToValue 'N/A'
+
+    .EXAMPLE
+    Get-Process |
+        Select-Object Id, Name, ProductVersion, MainWindowTitle |
+        Convert-PropertyEmptyValue -ToValue '-'
+    
+    #>
+    [CmdletBinding(PositionalBinding=$false,DefaultParameterSetName='ToNull')]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0)] [string[]] $Property,
+        [Parameter(ParameterSetName='ToNull',Mandatory=$true)] [switch] $ToNull,
+        [Parameter(ParameterSetName='ToEmptyString',Mandatory=$true)] [switch] $ToEmptyString,
+        [Parameter(ParameterSetName='ToValue')] [object] $ToValue
+    )
+    Begin
+    {
+        $hasProperty = !!$Property
+        $propertyHash = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::CurrentCultureIgnoreCase)
+        foreach ($p in $Property) { [void]$propertyHash.Add($p) }
+        $newValue = if ($ToEmptyString.IsPresent) { "" }
+        elseif ($ToNull.IsPresent) { $null }
+        elseif ($PSCmdlet.ParameterSetName -eq 'ToValue') { $ToValue }
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
+        foreach ($prop in $newInputObject.PSObject.Properties)
+        {
+            if ($hasProperty -and !$propertyHash.Contains($prop.Name)) { continue }
+            if ([String]::IsNullOrWhiteSpace($prop.Value) -or [System.DBNull]::Value.Equals($prop.Value))
+            {
+                $prop.Value = $newValue
+            }
+        }
+        $newInputObject
+    }
+}
+
 Function Select-DuplicatePropertyValue
 {
     [CmdletBinding(PositionalBinding=$false)]
