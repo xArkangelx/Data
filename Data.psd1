@@ -113,6 +113,7 @@ FunctionsToExport = @(
     'Set-PropertyDateFloor'
     'Set-PropertyDateTimeBreakpoint'
     'Set-PropertyDateTimeFormat'
+    'Set-PropertyStringFormat'
     'Set-PropertyType'
     'Set-PropertyValue'
     'Set-PropertyJoinValue'

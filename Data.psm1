@@ -2179,6 +2179,53 @@ Function Set-PropertyDateTimeFormat
     }
 }
 
+Function Set-PropertyStringFormat
+{
+    <#
+    .SYNOPSIS
+    Runs String.Format on one or more properties.
+
+    .PARAMETER InputObject
+    Objets with properties to format.
+
+    .PARAMETER Property
+    The properties to format.
+
+    .PARAMETER StringFormat
+    The string format to use. Only the {0} value is usable.
+
+    .PARAMETER DivideBy
+    Attempt to divide the original property value by this amount; useful for byte conversions.
+
+    .EXAMPLE
+    Get-ChildItem C:\Windows -File |
+        Select-Object Name, Length |
+        Set-PropertyStringFormat Length "{0:n2} MB" -DivideBy (1024*1024)
+    #>
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
+        [Parameter(Mandatory=$true, Position=1)] [string] $StringFormat,
+        [Parameter()] [double] $DivideBy
+    )
+    Process
+    {
+        if (!$InputObject) { return }
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property)
+        foreach ($propertyName in $Property)
+        {
+            $oldValue = $newInputObject.$propertyName
+            if ([String]::IsNullOrEmpty($oldValue)) { continue }
+            if ($DivideBy) { $oldValue = $oldValue / $DivideBy }
+            $newValue = [string]::Format($StringFormat, $oldValue)
+            $newInputObject.$propertyName = $newValue
+        }
+        $newInputObject
+    }
+}
+
 Function Set-PropertyType
 {
     [CmdletBinding(PositionalBinding=$false)]
