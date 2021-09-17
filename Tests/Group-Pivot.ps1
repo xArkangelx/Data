@@ -27,5 +27,11 @@ Describe "Group-Pivot" {
                 Group-Pivot -GroupProperty K -ColumnProperty A -ValueProperty B -NoCount
             $result[0].PSObject.Properties.Name -join '+' | Should Be "K+Col"
         }
+
+        It 'Works with datetime keys' {
+            $result = [pscustomobject]@{Timestamp = [DateTime]::Today.AddMilliseconds(123); Column = 'A'; Present = $true} |
+                Group-Pivot Timestamp Column Present
+            $result.A | Should Be $true
+        }
     }
 }

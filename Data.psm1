@@ -297,14 +297,14 @@ Function Group-Pivot
                 ConvertTo-Dictionary $GroupProperty -KeyJoin '|'
         }
 
-        foreach ($group in $groupDict.Values)
+        foreach ($groupPair in $groupDict.GetEnumerator())
         {
+            $group = $groupPair.Value
             $result = [ordered]@{}
             foreach ($property in $GroupProperty)
             {
                 $result[$property] = $group[0].$property
             }
-            $key = $result.Values -join '|' # Keep here since it's building off the group property values
 
             if (!$NoCount.IsPresent) { $result['Count'] = $group.Count }
 
@@ -313,9 +313,9 @@ Function Group-Pivot
                 $result[$property] = $group[0].$property
             }
 
-            foreach ($value in $columnDict.Keys)
+            foreach ($value in @($columnDict.GetEnumerator()).Key)
             {
-                $valueGroup = $valueDict[$value][$key]
+                $valueGroup = $valueDict[$value][$groupPair.Key]
                 $result[$value] = if ($valueGroup) { $valueGroup[0].$ValueProperty }
             }
 
