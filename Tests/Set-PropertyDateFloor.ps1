@@ -10,6 +10,18 @@ Describe "Set-PropertyDateFloor" {
             $out.Count | Should Be 0
         }
 
+        It 'Ignores null values' {
+            $result = [pscustomobject]@{A=$null} |
+                Set-PropertyDateFloor A -Day
+            $result.A | Should Be $null
+        }
+
+        It 'Ignores empty strings' {
+            $result = [pscustomobject]@{A=''} |
+                Set-PropertyDateFloor A -Day
+            $result.A | Should Be ''
+        }
+
         It 'Works with -Second 1' {
             $time1 | Set-PropertyDateFloor -Property A -Second 1 |
                 ForEach-Object A |
@@ -88,6 +100,18 @@ Describe "Set-PropertyDateFloor" {
                 Should Be ([datetime]'3/1/2019 12:00:00 AM')
         }
 
+        It 'Works with -Months' {
+            $result = [pscustomobject]@{A="1/2/2019"; B="2/3/2019"; C="3/4/2019"; D="4/5/2019"; E="6/1/2019"; F="12/4/2019"} |
+                Set-PropertyDateFloor -Property A, B, C, D, E, F -Months 2
+            $result.A | Should Be ([datetime]"1/1/2019")
+            $result.B | Should Be ([datetime]"1/1/2019")
+            $result.C | Should Be ([datetime]"3/1/2019")
+            $result.D | Should Be ([datetime]"3/1/2019")
+            $result.E | Should Be ([datetime]"5/1/2019")
+            $result.F | Should Be ([datetime]"11/1/2019")
+
+        }
+
         It 'Works with two properties' {
             $result = $time1 | Set-PropertyDateFloor -Property A, B -Minute 30
             $result.A | Should Be ([datetime]"3/4/2019 11:30:00 PM")
@@ -98,6 +122,12 @@ Describe "Set-PropertyDateFloor" {
             $time1 | Set-PropertyDateFloor -Property A -ToNewProperty New -Day |
                 ForEach-Object New |
                 Should Be ([datetime]'3/4/2019 12:00:00 AM')
+        }
+
+        It 'Works with -Format' {
+            $result = [pscustomobject]@{A="1/1/2019 12:33:00 PM"} |
+                Set-PropertyDateFloor A -Minute 30 -Format 'yyyy-MM-dd HH:mm:ss'
+            $result.A | Should Be '2019-01-01 12:30:00'
         }
     }
 }

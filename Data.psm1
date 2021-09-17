@@ -1849,17 +1849,64 @@ Function Set-PropertyOrder
 
 Function Set-PropertyDateFloor
 {
+    <#
+    .SYNOPSIS
+    Rounds timestamps down to the nearest second, minute, hour, day, month or months to help with grouping for reports.
+
+    .PARAMETER InputObject
+    Objets with timestamps to round down.
+
+    .PARAMETER Property
+    DateTime properties to round down.
+
+    .PARAMETER ToNewProperty
+    Save the new value to a new property instead of overwriting the old property.
+
+    .PARAMETER Format
+    Convert the new value to this datetime ToString format after rounding.
+
+    .PARAMETER Second
+    Round down to the nearest X seconds.
+
+    .PARAMETER Minute
+    Round down to the nearest X minutes.
+
+    .PARAMETER Hour
+    Round down to the nearest X hours.
+
+    .PARAMETER Day
+    Round down to the timestamp date.
+
+    .PARAMETER Month
+    Round down to the timestamp month.
+
+    .PARAMETER Months
+    Round down to the nearest X months.
+
+    .EXAMPLE
+    Get-ChildItem C:\Windows |
+        Select-Object Name, LastWriteTime |
+        Set-PropertyDateFloor LastWriteTime -Month -Format 'yyyy-MM'
+
+    .EXAMPLE
+    Get-Process |
+        Select-Object Name, StartTime |
+        Set-PropertyDateFloor StartTime -ToNewProperty StartQuarterHour -Minute 15
+
+    #>
     [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true,Position=0)] [string[]] $Property,
         [Parameter()] [string[]] $ToNewProperty,
+        [Parameter()] [string] $Format,
         [Parameter(ParameterSetName='Second')] [int] $Second,
         [Parameter(ParameterSetName='Minute')] [int] $Minute,
         [Parameter(ParameterSetName='Hour')] [int] $Hour,
         [Parameter(ParameterSetName='Day')] [switch] $Day,
-        [Parameter(ParameterSetName='Month')] [switch] $Month
+        [Parameter(ParameterSetName='Month')] [switch] $Month,
+        [Parameter(ParameterSetName='Months')] [int] $Months
     )
     Begin
     {
@@ -1883,7 +1930,10 @@ Function Set-PropertyDateFloor
             $propertyName = $Property[$i]
             $newPropertyName = $newPropertyList[$i]
             $value = $InputObject.$propertyName
-            try { $value = [datetime]$value } catch { continue }
+
+            if ([string]::IsNullOrEmpty($value)) { continue }
+            $value = [datetime]$value
+
             if ($PSCmdlet.ParameterSetName -eq 'Second')
             {
                 $seconds = [Math]::Floor($value.Second / [double]$Second) * $Second
@@ -1907,6 +1957,16 @@ Function Set-PropertyDateFloor
             {
                 $newValue = $value.Date.AddDays(-1*$value.Day + 1)
             }
+            elseif ($PSCmdlet.ParameterSetName -eq 'Months')
+            {
+                $newValue = [DateTime]::new($value.Year, [Math]::Floor(($value.Month-1)/$Months) * $Months + 1, 1)
+            }
+
+            if ($Format)
+            {
+                $newValue = $newValue.ToString($Format)
+            }
+
             $newInputObject.$newPropertyName = $newValue
         }
 
