@@ -2228,24 +2228,59 @@ Function Set-PropertyStringFormat
 
 Function Set-PropertyType
 {
+    <#
+    .SYNOPSIS
+    Changes the type on input object properties.
+
+    .PARAMETER InputObject
+    Objets with properties to change the type of.
+
+    .PARAMETER Property
+    The properties to change the type of.
+
+    .PARAMETER Type
+    The type to change the properties to.
+
+    .PARAMETER ParseExact
+    Use a [Type]::ParseExact string to parse the value.
+
+    .PARAMETER Parse
+    Use a [Type]::Parse method to convert the value.
+
+    .EXAMPLE
+    Import-Csv ~\Path\To\File.csv | # Timestamps will be strings
+        Set-PropertyType Timestamp DateTime # Now they're DateTime values; assuming they were parseable
+
+    .EXAMPLE
+    [pscustomobject]@{Record=1; Timestamp="201101-120156"} |
+        Set-PropertyType Timestamp DateTime -ParseExact 'yyMMdd-mmHHss'
+
+    .EXAMPLE
+    [pscustomobject]@{Record=1; IsEnabled='False'} |
+        Set-PropertyType IsEnabled Bool -Parse
+
+    #>
     [CmdletBinding(PositionalBinding=$false)]
     Param
     (
         [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
         [Parameter(Mandatory=$true, Position=0)] [string[]] $Property,
-        [Parameter(Mandatory=$true, Position=1)] [ValidateSet('DateTime', 'String', 'Int', 'Double', 'Bool')] [string] $Type,
+        [Parameter(Mandatory=$true, Position=1)] [ValidateSet('Bool', 'DateTime', 'Double', 'Int', 'String', 'TimeSpan')] [string] $Type,
         [Parameter()] [string] $ParseExact,
         [Parameter()] [switch] $Parse
     )
     Begin
     {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
         $as = switch ($Type)
         {
-            'String' { [string] }
-            'DateTime' { [DateTime] }
-            'Int' { [int] }
-            'Double' { [double] }
             'Bool' { [bool] }
+            'DateTime' { [DateTime] }
+            'Double' { [double] }
+            'Int' { [int] }
+            'String' { [string] }
+            'TimeSpan' { [timespan] }
+            default { throw "Unknown Type: '$Type'." }
         }
     }
     Process

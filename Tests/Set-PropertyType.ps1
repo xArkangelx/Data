@@ -28,6 +28,13 @@ Describe "Set-PropertyType" {
             $result.Date.GetType() | Should Be ([datetime])
         }
 
+        It 'Converts String to TimeSpan' {
+            $result = [pscustomobject]@{TimeSpan="06:00"} |
+                Set-PropertyType TimeSpan TimeSpan
+
+            $result.TimeSpan | Should Be ([TimeSpan]::FromHours(6))
+        }
+
         It 'Converts String to Double' {
             $result = [pscustomobject]@{Value="1.51"} |
                 Set-PropertyType Value Double
