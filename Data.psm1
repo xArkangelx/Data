@@ -2186,7 +2186,7 @@ Function Set-PropertyStringFormat
     Runs String.Format on one or more properties.
 
     .PARAMETER InputObject
-    Objets with properties to format.
+    Objects with properties to format.
 
     .PARAMETER Property
     The properties to format.
