@@ -2342,6 +2342,8 @@ Function Set-PropertyValue
     {
         trap { $PSCmdlet.ThrowTerminatingError($_) }
 
+        if (!$InputObject) { return }
+
         if ($NoClone) { $newInputObject = [Rhodium.Data.DataHelpers]::EnsureHasProperties($InputObject, $Property) }
         else { $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $Property) }
 

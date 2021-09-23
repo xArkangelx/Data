@@ -15,6 +15,16 @@ foreach ($value in $true, $false)
     Describe "Set-PropertyValue - PowerShell: $value" {
 
         Context "Basic Checks" {
+            It 'Ignores null input' {
+                $result = $null | Set-PropertyValue B 2
+                @($result).Count | Should Be 0
+            }
+
+            It 'Ignores empty input' {
+                $result = @() | Set-PropertyValue B 2
+                @($result).Count | Should Be 0
+            }
+
             It 'Sets Property to Value' {
                 [pscustomobject]@{A=1} |
                     Set-PropertyValue B 2 |
