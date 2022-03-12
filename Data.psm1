@@ -1829,6 +1829,30 @@ Function Write-PipelineProgress
 
 Function Set-PropertyOrder
 {
+    <#
+    .SYNOPSIS
+    Changes the order of properties without adding or removing any. Can force specific properties to the beginning or ending of the list.
+
+    .PARAMETER InputObject
+    The objects to change the property order of.
+
+    .PARAMETER Begin
+    List of properties to put at the beginning.
+
+    .PARAMETER End
+    List of properties to put at the end.
+
+    .EXAMPLE
+    Get-ChildItem C:\Windows |
+        Select-Object Name, LastWriteTime, Length |
+        Set-PropertyOrder LastWriteTime
+
+    .EXAMPLE
+    Get-Process |
+        Select-Object Name, Id, StartTime, *Size64 |
+        Set-PropertyOrder -Begin Id, Name -End StartTime
+
+    #>
     [CmdletBinding(PositionalBinding=$false)]
     Param
     (
