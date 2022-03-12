@@ -1230,7 +1230,6 @@ Function Expand-ObjectPropertyTree
     }
 }
 
-if (!$Script:LoadedDataSharp) {
 Function Rename-Property
 {
     [CmdletBinding(PositionalBinding=$false)]
@@ -1279,7 +1278,6 @@ Function Rename-Property
         }
         $newObject
     }
-}
 }
 
 Function ConvertTo-Dictionary
@@ -2332,7 +2330,6 @@ Function Set-PropertyType
     }
 }
 
-if (!$Script:LoadedDataSharp) {
 Function Set-PropertyValue
 {
     [CmdletBinding(PositionalBinding=$false)]
@@ -2409,7 +2406,6 @@ Function Set-PropertyValue
         }
         $newInputObject
     }
-}
 }
 
 Function Set-PropertyJoinValue
