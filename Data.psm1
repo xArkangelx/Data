@@ -1787,6 +1787,26 @@ Function Invoke-PipelineThreading
 
 Function Write-PipelineProgress
 {
+    <#
+    .SYNOPSIS
+    Creates a progress bar as items in a pipeline are processed. Place before a long running function.
+    The progress overhead will slow down the pipeline slightly if there are 10,000+ items.
+
+    .PARAMETER InputObject
+    Pipeline objects to track
+
+    .PARAMETER OperationProperty
+    A property to use to describe the operation (item being processed). Will use the entire object if not specified.
+
+    .PARAMETER Activity
+    The name of the activity.
+
+    .EXAMPLE
+    Get-ChildItem C:\Windows\System32 -File |
+        Write-PipelineProgress FullName -Activity "Hashing files" |
+        ForEach-Object { Get-FileHash $_.FullName }
+
+    #>
     [CmdletBinding(PositionalBinding=$false)]
     Param
     (
