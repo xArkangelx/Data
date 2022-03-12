@@ -101,6 +101,7 @@ FunctionsToExport = @(
     'Join-UniqueIndex'
     'Expand-Normalized'
     'Expand-Property'
+    'Expand-ObjectPropertyTree'
     'Rename-Property'
     'ConvertTo-Dictionary'
     'Select-DuplicatePropertyValue'

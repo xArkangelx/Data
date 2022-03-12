@@ -1187,6 +1187,49 @@ Function Expand-Property
     }
 }
 
+Filter Walk-ObjectPropertyTree($Object, $IndexedPath, $NamedPath)
+{
+    if ($Object -isnot [System.Management.Automation.PSCustomObject])
+    {
+        return [pscustomobject][ordered]@{
+            IndexedPath = $IndexedPath
+            NamedPath = $NamedPath
+            Value = $Object
+        }
+    }
+    foreach ($property in $Object.PSObject.Properties)
+    {
+        $name = $property.Name
+        if ($property.TypeNameOfValue.EndsWith('[]'))
+        {
+            $i = 0
+            foreach ($item in $property.Value)
+            {
+                Walk-ObjectPropertyTree $item "$IndexedPath/$name[$i]" "$NamedPath/$name"
+                $i += 1
+            }
+        }
+        else
+        {
+            Walk-ObjectPropertyTree $property.Value "$IndexedPath/$name" "$NamedPath/$name"
+        }
+    }
+}
+
+Function Expand-ObjectPropertyTree
+{
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true,Position=0)] [object] $InputObject
+    )
+    Process
+    {
+        if (!$InputObject) { return }
+        Walk-ObjectPropertyTree $InputObject
+    }
+}
+
 if (!$Script:LoadedDataSharp) {
 Function Rename-Property
 {
