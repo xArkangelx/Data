@@ -111,8 +111,8 @@ FunctionsToExport = @(
     'Invoke-PipelineThreading'
     'Write-PipelineProgress'
     'Set-PropertyOrder'
-    'Set-PropertyDateFloor'
     'Set-PropertyDateTimeBreakpoint'
+    'Set-PropertyDateTimeFloor'
     'Set-PropertyDateTimeFormat'
     'Set-PropertyStringFormat'
     'Set-PropertyType'
@@ -141,7 +141,9 @@ CmdletsToExport = @()
 VariablesToExport = @()
 
 # Aliases to export from this module
-AliasesToExport = @()
+AliasesToExport = @(
+    'Set-PropertyDateFloor'
+)
 
 # List of all modules packaged with this module
 # ModuleList = @()
