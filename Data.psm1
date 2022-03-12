@@ -2146,6 +2146,34 @@ New-Alias -Name Set-PropertyDateFloor -Value Set-PropertyDateTimeFloor
 
 Function Set-PropertyDateTimeFormat
 {
+    <#
+    .SYNOPSIS
+    Converts a DateTime property value to a string in the specified format. Useful for making string sortable timestamps.
+    Can also append the timezone name to assist multi-timezone users.
+
+    .PARAMETER InputObject
+    Objets with timestamps to convert.
+
+    .PARAMETER Property
+    DateTime properties to convert to string.
+
+    .PARAMETER Format
+    Format to convert the datetime to.
+
+    .PARAMETER AppendTimeZone
+    Optionally add the time zone to the end in Short or Long format.
+
+    .EXAMPLE
+    Get-ChildItem C:\Windows |
+        Select-Object Name, LastWriteTime |
+        Set-PropertyDateTimeFormat LastWriteTime 'yyyy-MM-dd HH:mm:ss' -AppendTimeZone Long
+
+    .EXAMPLE
+    Get-Process |
+        Select-Object Name, StartTime |
+        Set-PropertyDateTimeFormat StartTime 'H:mm tt'
+
+    #>
     [CmdletBinding(PositionalBinding=$false)]
     Param
     (
