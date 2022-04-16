@@ -104,6 +104,7 @@ FunctionsToExport = @(
     'Expand-ObjectPropertyTree'
     'Rename-Property'
     'ConvertTo-Dictionary'
+    'Select-DedupByPropertyValue'
     'Select-DuplicatePropertyValue'
     'Select-Excluding'
     'Select-Including'

@@ -1529,6 +1529,59 @@ Function Convert-PropertyEmptyValue
     }
 }
 
+Function Select-DedupByPropertyValue
+{
+    <#
+    .SYNOPSIS
+    Selects the first (or more) objects from a set based on one or more property values.
+
+    .PARAMETER InputObject
+    The objects to filter.
+
+    .PARAMETER Property
+    The properties to use for a key.
+
+    .PARAMETER Count
+    The number of objects to keep for each key.
+
+    .PARAMETER KeyJoin
+    The string to join multiple values with to form the key.
+
+    .EXAMPLE
+    Get-Process | Select-DedupByPropertyValue Name
+
+    #>
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true,Position=0)] [string[]] $Property,
+        [Parameter()] [ValidateRange(1,[int]::MaxValue)] [int] $Count = 1,
+        [Parameter()] [string] $KeyJoin = '|'
+    )
+    Begin
+    {
+        $existingDict = @{}
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $keyValue = $(foreach ($key in $Property) { $InputObject.$key }) -join $KeyJoin
+        if ($existingDict.Contains($keyValue))
+        {
+            $current = $existingDict[$keyValue]
+            $existingDict[$keyValue] = $current + 1
+
+            if ($current -lt $Count) { $InputObject }
+        }
+        else
+        {
+            $existingDict[$keyValue] = 1
+            $InputObject
+        }
+    }
+}
+
 Function Select-DuplicatePropertyValue
 {
     [CmdletBinding(PositionalBinding=$false)]
