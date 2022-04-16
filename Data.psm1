@@ -300,6 +300,105 @@ Function Group-Pivot
     }
 }
 
+Function Group-SequentialSame
+{
+    <#
+    .SYNOPSIS
+    Groups objects together when their property values are the same as the previous object.
+
+    .PARAMETER InputObject
+    The objects to group.
+
+    .PARAMETER Property
+    The properties to group objects by.
+
+    .PARAMETER GroupProperty
+    The name of the property to store the group in. Defaults to Group.
+
+    .PARAMETER CountProperty
+    The name of a property to store the group count in.
+
+    .PARAMETER IndexProperty
+    The name of a property to store the group index in.
+
+    .PARAMETER IndexStart
+    The number to start counting the index at.
+
+    .PARAMETER KeyJoin
+    Objects are grouped as though their values were strings; join them with this value when making the key for each group.
+
+    .EXAMPLE
+    Get-ChildItem C:\Windows -File |
+        Sort-Object Name |
+        Select-Object Name, Extension, Length |
+        Group-SequentialSame Extension -GroupProperty Files -CountProperty Count -IndexProperty GroupNumber |
+        Format-Table -AutoSize
+
+    .EXAMPLE
+    Get-Service |
+        Select-Object Name, StartType, Status |
+        Group-SequentialSame StartType, Status |
+        Format-Table -AutoSize
+
+    #>
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0, Mandatory=$true)] [string[]] $Property,
+        [Parameter()] [string] $GroupProperty = 'Group',
+        [Parameter()] [string] $CountProperty,
+        [Parameter()] [string] $IndexProperty,
+        [Parameter()] [int] $IndexStart = 0,
+        [Parameter()] [string] $KeyJoin = '|'
+    )
+    Begin
+    {
+        $inputObjectList = [System.Collections.Generic.List[object]]::new()
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        $groupList = [System.Collections.Generic.List[object]]::new()
+        $group = $null
+        $lastKeyValue = $null
+        foreach ($object in $inputObjectList)
+        {
+            $keyValue = $(foreach ($p in $Property) { $object.$p }) -join $KeyJoin
+            if ($keyValue -ne $lastKeyValue)
+            {
+                $group = [ordered]@{Group=[System.Collections.Generic.List[object]]::new()}
+                $groupList.Add($group)
+            }
+            $group.Group.Add($object)
+            $lastKeyValue = $keyValue
+        }
+
+        $index = $IndexStart
+        foreach ($group in $groupList)
+        {
+            $result = [ordered]@{}
+
+            if ($IndexProperty) { $result[$IndexProperty] = $index }
+            if ($CountProperty) { $result[$CountProperty] = $group.Group.Count }
+            $index += 1
+
+            foreach ($p in $Property)
+            {
+                $result[$p] = $group.Group[0].$p
+            }
+            
+            $result[$GroupProperty] = $group.Group
+
+            [pscustomobject]$result
+        }
+    }
+}
+
 Function Join-GroupCount
 {
     [CmdletBinding(PositionalBinding=$false)]

@@ -89,6 +89,7 @@ NestedModules = @('Data.psm1')
 FunctionsToExport = @(
     'Group-Denormalized'
     'Group-Pivot'
+    'Group-SequentialSame'
     'Join-GroupCount'
     'Join-GroupHeaderRow'
     'Join-List'
