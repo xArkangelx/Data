@@ -324,9 +324,6 @@ Function Group-SequentialSame
     .PARAMETER IndexStart
     The number to start counting the index at.
 
-    .PARAMETER KeyJoin
-    Objects are grouped as though their values were strings; join them with this value when making the key for each group.
-
     .EXAMPLE
     Get-ChildItem C:\Windows -File |
         Sort-Object Name |
@@ -349,8 +346,7 @@ Function Group-SequentialSame
         [Parameter()] [string] $GroupProperty = 'Group',
         [Parameter()] [string] $CountProperty,
         [Parameter()] [string] $IndexProperty,
-        [Parameter()] [int] $IndexStart = 0,
-        [Parameter()] [string] $KeyJoin = '|'
+        [Parameter()] [int] $IndexStart = 0
     )
     Begin
     {
@@ -365,17 +361,25 @@ Function Group-SequentialSame
     {
         $groupList = [System.Collections.Generic.List[object]]::new()
         $group = $null
-        $lastKeyValue = $null
+        $notFirstItem = $false
+        $lastKeyValues = @{}
         foreach ($object in $inputObjectList)
         {
-            $keyValue = $(foreach ($p in $Property) { $object.$p }) -join $KeyJoin
-            if ($keyValue -ne $lastKeyValue)
+            $same = $notFirstItem
+            foreach ($p in $Property)
+            {
+                if ($object.$p -ne $lastKeyValues[$p]) { $same = $false }
+                $lastKeyValues[$p] = $object.$p
+            }
+
+            if (!$same)
             {
                 $group = [ordered]@{Group=[System.Collections.Generic.List[object]]::new()}
                 $groupList.Add($group)
             }
+
             $group.Group.Add($object)
-            $lastKeyValue = $keyValue
+            $notFirstItem = $true
         }
 
         $index = $IndexStart
