@@ -1690,6 +1690,9 @@ Function Invoke-PipelineChunks
     .PARAMETER SingleChunk
     Collect the entire pipeline into a single chunk. Useful for self joins.
 
+    .PARAMETER ChunkNumberVariable
+    Store the chunk number (1 indexed) in a variable with this name for use in the scriptblock.
+
     .PARAMETER ScriptBlock
     The scriptblock to execute for each chunk. Use the $input variable to access the objects.
 
@@ -1706,12 +1709,14 @@ Function Invoke-PipelineChunks
         [Parameter(Position=0,Mandatory=$true,ParameterSetName='ChunkSize')] [int] $ChunkSize,
         [Parameter(Position=1,Mandatory=$true,ParameterSetName='ChunkSize')]
             [Parameter(Position=0,Mandatory=$true,ParameterSetName='SingleChunk')] [scriptblock] $ScriptBlock,
-        [Parameter(ParameterSetName='SingleChunk')] [switch] $SingleChunk
+        [Parameter(ParameterSetName='SingleChunk')] [switch] $SingleChunk,
+        [Parameter()] [string] $ChunkNumberVariable
     )
     Begin
     {
         $private:chunkList = [System.Collections.Generic.LinkedList[object]]::new()
         $private:singleMode = $PSCmdlet.ParameterSetName -eq 'SingleChunk'
+        $private:chunkNumber = 1
     }
     Process
     {
@@ -1723,8 +1728,13 @@ Function Invoke-PipelineChunks
             {
                 $private:varList = [System.Collections.Generic.List[PSVariable]]::new()
                 $private:varList.Add([PSVariable]::new('input', $private:chunkList))
+                if ($ChunkNumberVariable)
+                {
+                    $private:varList.Add([PSVariable]::new($ChunkNumberVariable, $private:chunkNumber))
+                }
                 $ScriptBlock.InvokeWithContext($null, $private:varList, $null)
                 $private:chunkList = [System.Collections.Generic.LinkedList[object]]::new()
+                $private:chunkNumber += 1
             }
         }
     }
@@ -1734,6 +1744,10 @@ Function Invoke-PipelineChunks
         {
             $private:varList = [System.Collections.Generic.List[PSVariable]]::new()
             $private:varList.Add([PSVariable]::new('input', $private:chunkList))
+            if ($ChunkNumberVariable)
+            {
+                $private:varList.Add([PSVariable]::new($ChunkNumberVariable, $private:chunkNumber))
+            }
             $ScriptBlock.InvokeWithContext($null, $private:varList, $null)
         }
     }
