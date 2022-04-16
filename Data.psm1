@@ -59,7 +59,8 @@ Function Group-Denormalized
         [Parameter()] [string[]] $CountUnique,
         [Parameter()] [switch] $AllowEmpty,
         [Parameter()] [string] $JoinWith,
-        [Parameter()] [string] $ToGroupProperty
+        [Parameter()] [string] $ToGroupProperty,
+        [Parameter()] [string] $CountProperty = 'Count'
     )
     Begin
     {
@@ -156,7 +157,7 @@ Function Group-Denormalized
             {
                 $result[$property] = $firstObject.$property
             }
-            if (!$NoCount) { $result['Count'] = $group.Count }
+            if (!$NoCount) { $result[$CountProperty] = $group.Count }
             foreach ($property in $propertyList)
             {
                 if ($keepFirstDict.Contains($property))

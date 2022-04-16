@@ -26,6 +26,19 @@ Describe "Group-Denormalized" {
             $result.AllB | Should Be '2+1+1+4+3'
             $result.UniqueB | Should Be '2+1+4+3'
         }
+
+        It 'CountProperty' {
+            $result = @(
+                [pscustomobject]@{A=1}
+                [pscustomobject]@{A=1}
+            ) |
+                Group-Denormalized A -CountProperty Items
+            
+            @($result).Count | Should Be 1
+            $result.PSObject.Properties.Name -join '+' | Should Be "A+Items"
+            $result.A | Should Be 1
+            $result.Items | Should Be 2
+        }
     }
 
     Context "Special Inputs" {
