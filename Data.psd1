@@ -92,6 +92,7 @@ FunctionsToExport = @(
     'Group-SequentialSame'
     'Join-GroupCount'
     'Join-GroupHeaderRow'
+    'Join-Hashtable'
     'Join-List'
     'Join-Index'
     'Join-MissingSetCounts'

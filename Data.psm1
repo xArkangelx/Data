@@ -588,6 +588,66 @@ Function Join-GroupHeaderRow
     }
 }
 
+Function Join-Hashtable
+{
+    <#
+    .SYNOPSIS
+    Looks up a value in a hashtable and adds it to a new property.
+
+    .PARAMETER InputObject
+    The objects to add a property to.
+
+    .PARAMETER KeyProperty
+    The property to use for the key.
+
+    .PARAMETER ValueProperty
+    The property to store the hashtable value in.
+
+    .PARAMETER Hashtable
+    The hashtable to lookup values in.
+
+    .PARAMETER AsString
+    Convert the key value to a string to make it easier to lookup in a string-keyed hashtable.
+
+    .PARAMETER IfNotFound
+    A value to set ValueProperty to if hashtable doesn't contain KeyProperty's value.
+
+    .EXAMPLE
+    Get-Service |
+        Select-Object Name, Status |
+        Join-Hashtable Status StatusLabel @{Running='Live'; Stopped='Dead'} -AsString -IfNotFound 'Unknown'
+
+    #>
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0,Mandatory=$true)] [string] $KeyProperty,
+        [Parameter(Position=1,Mandatory=$true)] [string] $ValueProperty,
+        [Parameter(Position=2,Mandatory=$true)] [System.Collections.IDictionary] $Hashtable,
+        [Parameter()] [switch] $AsString,
+        [Parameter()] [object] $IfNotFound
+    )
+    Process
+    {
+        if (!$InputObject) { return }
+        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $ValueProperty)
+        
+        $keyValue = $InputObject.$KeyProperty
+        if ($AsString) { $keyValue = [string]$keyValue }
+        if ($keyValue -ne $null -and $Hashtable.Contains($keyValue))
+        {
+            $newInputObject.$ValueProperty = $Hashtable[$keyValue]
+        }
+        elseif ($InputObject.$KeyProperty -ne $null -and $PSBoundParameters['IfNotFound'])
+        {
+            $newInputObject.$ValueProperty = $IfNotFound
+        }
+        
+        $newInputObject
+    }
+}
+
 Function Join-List
 {
     [CmdletBinding(PositionalBinding=$false)]
