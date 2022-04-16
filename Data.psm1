@@ -324,6 +324,12 @@ Function Group-SequentialSame
     .PARAMETER IndexStart
     The number to start counting the index at.
 
+    .PARAMETER MaxSeqTimeSpan
+    Automatically detect DateTime values and treat them the same if their maximum difference is within this many milliseconds.
+
+    .PARAMETER TimeSpanProperty
+    When used with MaxSeqTimeSpan, stores the total time span in this property.
+
     .EXAMPLE
     Get-ChildItem C:\Windows -File |
         Sort-Object Name |
@@ -337,6 +343,13 @@ Function Group-SequentialSame
         Group-SequentialSame StartType, Status |
         Format-Table -AutoSize
 
+    .EXAMPLE
+    Get-Process |
+        Select-Object Name, StartTime |
+        Sort-Object StartTime |
+        Group-SequentialSame StartTime -IndexProperty Batch -CountProperty Count -MaxSeqTimeSpan (1000*60*5) -TimeSpanProperty Range -GroupProperty $null |
+        Format-Table -AutoSize
+
     #>
     [CmdletBinding(PositionalBinding=$false)]
     Param
@@ -346,6 +359,8 @@ Function Group-SequentialSame
         [Parameter()] [string] $GroupProperty = 'Group',
         [Parameter()] [string] $CountProperty,
         [Parameter()] [string] $IndexProperty,
+        [Parameter()] [uint32] $MaxSeqTimeSpan,
+        [Parameter()] [string] $TimeSpanProperty,
         [Parameter()] [int] $IndexStart = 0
     )
     Begin
@@ -359,16 +374,24 @@ Function Group-SequentialSame
     }
     End
     {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
         $groupList = [System.Collections.Generic.List[object]]::new()
         $group = $null
         $notFirstItem = $false
         $lastKeyValues = @{}
+        $timeProperty = $null
         foreach ($object in $inputObjectList)
         {
             $same = $notFirstItem
             foreach ($p in $Property)
             {
-                if ($object.$p -ne $lastKeyValues[$p]) { $same = $false }
+                if ($MaxSeqTimeSpan -and $object.$p -is [datetime] -and $lastKeyValues[$p] -is [datetime])
+                {
+                    $timeProperty = $p
+                    $span = [Math]::Abs(($object.$p - $lastKeyValues[$p]).TotalMilliseconds)
+                    if ($span -gt $MaxSeqTimeSpan) { $same = $false }
+                }
+                elseif ($object.$p -ne $lastKeyValues[$p]) { $same = $false }
                 $lastKeyValues[$p] = $object.$p
             }
 
@@ -389,6 +412,12 @@ Function Group-SequentialSame
 
             if ($IndexProperty) { $result[$IndexProperty] = $index }
             if ($CountProperty) { $result[$CountProperty] = $group.Group.Count }
+            if ($TimeSpanProperty)
+            {
+                if (!$timeProperty) { throw "No datetime property was found with MaxSeqTimeSpan." }
+                $measure = $group.Group | Measure-Object -Minimum -Maximum $timeProperty
+                $result[$TimeSpanProperty] = $measure.Maximum - $measure.Minimum
+            }
             $index += 1
 
             foreach ($p in $Property)
@@ -396,7 +425,10 @@ Function Group-SequentialSame
                 $result[$p] = $group.Group[0].$p
             }
             
-            $result[$GroupProperty] = $group.Group
+            if ($GroupProperty)
+            {
+                $result[$GroupProperty] = $group.Group
+            }
 
             [pscustomobject]$result
         }

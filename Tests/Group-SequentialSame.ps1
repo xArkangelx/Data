@@ -108,6 +108,15 @@ Describe "Group-SequentialSame" {
             $result[0].PSObject.Properties.Name -join '+' | Should Be 'Series+Items'
         }
 
+        It '-GroupProperty $null' {
+            $result = @(
+                [pscustomobject]@{Series='A'; Index=1}
+            ) |
+                Group-SequentialSame Series -GroupProperty $null
+            
+            $result[0].PSObject.Properties.Name -join '+' | Should Be 'Series'
+        }
+
         It '-CountProperty' {
             $result = @(
                 [pscustomobject]@{Series='A'}
@@ -149,6 +158,37 @@ Describe "Group-SequentialSame" {
                 Group-SequentialSame Series -IndexProperty Index -CountProperty Count
 
             $result[0].PSObject.Properties.Name -join '+' | Should Be 'Index+Count+Series+Group'
+        }
+
+        It '-MaxSeqTimeSpan -TimeSpanProperty' {
+            $startTime = [DateTime]::UtcNow
+            $result = @(
+                [pscustomobject]@{Series='A'; Time=$startTime; Index=1}
+                [pscustomobject]@{Series='A'; Time=$startTime.AddSeconds(1); Index=2}
+                [pscustomobject]@{Series='B'; Time=$startTime.AddSeconds(2); Index=3}
+                [pscustomobject]@{Series='B'; Time=$startTime.AddSeconds(4); Index=4}
+                [pscustomobject]@{Series='A'; Time=$startTime.AddSeconds(5); Index=5}
+            ) |
+                Group-SequentialSame Series, Time -MaxSeqTimeSpan 1000 -IndexProperty Index -TimeSpanProperty TimeSpan
+
+            @($result).Count | Should Be 4
+            $result[0].PSObject.Properties.Name -join '+' | Should Be 'Index+TimeSpan+Series+Time+Group'
+
+            $result[0].Series | Should Be A
+            $result[0].Time | Should Be $startTime
+            $result[0].TimeSpan | Should Be ([TimeSpan]::FromSeconds(1))
+
+            $result[1].Series | Should Be B
+            $result[1].Time | Should Be $startTime.AddSeconds(2)
+            $result[1].TimeSpan | Should Be ([TimeSpan]::FromSeconds(0))
+
+            $result[2].Series | Should Be B
+            $result[2].Time | Should Be $startTime.AddSeconds(4)
+            $result[2].TimeSpan | Should Be ([TimeSpan]::FromSeconds(0))
+
+            $result[3].Series | Should Be A
+            $result[3].Time | Should Be $startTime.AddSeconds(5)
+            $result[3].TimeSpan | Should Be ([TimeSpan]::FromSeconds(0))
         }
     }
 }
