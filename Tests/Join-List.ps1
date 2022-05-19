@@ -151,6 +151,20 @@ Describe "Join-List" {
             $result = [pscustomobject]@{Key='A'; Value='Old'} | Join-List Key ([pscustomobject]@{Key='A'; Value=$null}) Key -Overwrite IfNewValueNotNullOrEmpty
             $result.Value | Should Be 'Old'
         }
+
+        It 'Overwrite does not overwrite when not matched as appropriate' {
+            $result1 = [pscustomobject]@{Key = 1; Exists = 'Yes' } | Join-List Key ([pscustomobject]@{Key=2; Exists='No'}) -Overwrite IfNewValueNotNullOrEmpty
+            $result1.Exists | Should Be 'Yes'
+
+            $result2 = [pscustomobject]@{Key = 1; Exists = 'Yes' } | Join-List Key ([pscustomobject]@{Key=2; Exists='No'}) -Overwrite Always
+            $result2.Exists | Should Be $null
+
+            $result3 = [pscustomobject]@{Key = 1; Exists = 'Yes' } | Join-List Key ([pscustomobject]@{Key=2; Exists='No'}) -Overwrite Never
+            $result3.Exists | Should Be Yes
+
+            $result4 = [pscustomobject]@{Key = 1; Exists = 'Yes' } | Join-List Key ([pscustomobject]@{Key=2; Exists='No'}) -Overwrite IfNullOrEmpty
+            $result4.Exists | Should Be Yes
+        }
     }
 
     Context "Setting values on matches" {

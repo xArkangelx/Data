@@ -750,7 +750,10 @@ Function Join-List
                     if (!$keepPropertyDict.Contains($propertyName)) { continue }
                     $propertyName = $keepPropertyDict[$propertyName]
                 }
-                $newObject[$propertyName] = $null
+                if ($overwriteMode -eq 'Always' -or !$newObject.Contains($propertyName))
+                {
+                    $newObject[$propertyName] = $null
+                }
             }
 
             if ($hasSetProperty)
