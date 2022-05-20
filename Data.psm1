@@ -2816,6 +2816,35 @@ Function Get-FormattedXml
     }
 }
 
+Function Get-IndentedText
+{
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true, Position=0)] [string[]] $Text,
+        [Parameter()] [string] $IndentWith = "    "
+    )
+    Begin
+    {
+        $lineList = [System.Collections.Generic.List[string]]::new()
+    }
+    Process
+    {
+        foreach ($line in $Text) { $lineList.Add($line) }
+    }
+    End
+    {
+        $lineList = $lineList -join "`n" -replace "`r" -split "`n"
+        for ($i = 0; $i -lt $lineList.Count; $i++)
+        {
+            $line = $lineList[$i]
+            if ([String]::IsNullOrEmpty($line)) { continue }
+            $lineList[$i] = "$IndentWith$line"
+        }
+        $lineList -join "`r`n"
+    }
+}
+
 Function Get-Sentences
 {
     [CmdletBinding(PositionalBinding=$false)]

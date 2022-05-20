@@ -123,6 +123,7 @@ FunctionsToExport = @(
     'Set-PropertyJoinValue'
     'Set-PropertySplitValue'
     'Get-FormattedXml'
+    'Get-IndentedText'
     'Get-Sentences'
     'Get-StringHash'
     'Get-UnindentedText'
