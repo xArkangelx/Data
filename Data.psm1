@@ -3112,3 +3112,45 @@ Function Expand-PlainText
         [System.Text.Encoding]::UTF8.GetString($outputStream.ToArray())
     }
 }
+
+Function Export-ClixmlZip
+{
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Mandatory=$true,Position=0)] [string] $Path,
+        [Parameter()] [int] $Depth = 2
+    )
+    Begin
+    {
+        $inputObjectList = [System.Collections.Generic.List[object]]::new()
+    }
+    Process
+    {
+        $inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+        $resolvedPath = $PSCmdlet.GetUnresolvedProviderPathFromPSPath($Path)
+        $xml = [System.Management.Automation.PSSerializer]::Serialize($inputObjectList.ToArray(), $Depth)
+        $bytes = Compress-PlainText -Text $xml
+        [System.IO.File]::WriteAllBytes($resolvedPath, $bytes)
+    }
+}
+
+Function Import-ClixmlZip
+{
+    Param
+    (
+        [Parameter(Mandatory=$true,Position=0)] [string] $Path
+    )
+    End
+    {
+        trap { $PSCmdlet.ThrowTerminatingError($_) }
+        $resolvedPath = $PSCmdlet.GetUnresolvedProviderPathFromPSPath($Path)
+        $bytes = [System.IO.File]::ReadAllBytes($resolvedPath)
+        $xml = Expand-PlainText -CompressedBytes $bytes
+        [System.Management.Automation.PSSerializer]::Deserialize($xml)
+    }
+}

@@ -135,6 +135,8 @@ FunctionsToExport = @(
     'Assert-Count'
     'Compress-PlainText'
     'Expand-PlainText'
+    'Export-ClixmlZip'
+    'Import-ClixmlZip'
 )
 
 # Cmdlets to export from this module
