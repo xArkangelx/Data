@@ -99,6 +99,7 @@ FunctionsToExport = @(
     'Join-Percentage'
     'Join-PropertyMultiValue'
     'Join-PropertySetComparison'
+    'Join-Self'
     'Join-TotalRow'
     'Join-UniqueIndex'
     'Expand-Normalized'

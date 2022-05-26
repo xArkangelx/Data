@@ -1244,6 +1244,132 @@ Function Join-PropertySetComparison
     }
 }
 
+Function Join-Self
+{
+    <#
+    .SYNOPSIS
+    Joins input objects to themselves. A scriptblock processes the objects first.
+
+    .PARAMETER InputKeys
+    The keys on the input side to join the input and processed input objects on. Optional.
+
+    .PARAMETER ScriptBlock
+    The scriptblock to execute to process the input objects. Uses $input to refer to the pipeline.
+
+    .PARAMETER InputKeys
+    The keys on the scriptblock side to join the input and processed input objects on. Optional. Defaults to InputKeys.
+
+    .PARAMETER KeyJoin
+    Objects are grouped as though their values were strings; join them with this value when making the key for each group.
+
+    .PARAMETER KeepProperty
+    Properties to keep from the processed input. Also serves to set the empty properties to add if no results are added.
+
+    .EXAMPLE
+    Get-Process |
+        Select-Object Id, ProcessName, WorkingSet64 |
+        Sort-Object WorkingSet64 -Descending |
+        Join-Self -ScriptBlock { $input | Measure-Object WorkingSet64 -Average -Sum | Select-Object Average, Sum } |
+        Select-Object Id, ProcessName, WorkingSet64,
+            @{Name='PercentOfAverage'; Expression={[Math]::Round(100*$_.WorkingSet64/$_.Average,2)}},
+            @{Name='PercentOfTotal'; Expression={[Math]::Round(100*$_.WorkingSet64/$_.Sum,2)}} |
+        Format-Table
+
+    .EXAMPLE
+    Get-Service |
+        Select-Object Name, StartType |
+        Join-Self StartType { $input | Group-Object StartType } Name -KeepProperty @{Count='CountWithSameStartType'}
+
+    #>
+    [CmdletBinding(PositionalBinding=$false)]
+    Param
+    (
+        [Parameter(ValueFromPipeline=$true)] [object] $InputObject,
+        [Parameter(Position=0)] [string[]] $InputKeys,
+        [Parameter(Position=1,Mandatory=$true)] [scriptblock] $ScriptBlock,
+        [Parameter(Position=2)] [string[]] $JoinKeys,
+        [Parameter()] [object[]] $KeepProperty,
+        [Parameter()] [string] $KeyJoin = '|'
+    )
+    Begin
+    {
+        $private:inputObjectList = [System.Collections.Generic.List[object]]::new()
+    }
+    Process
+    {
+        if (!$InputObject) { return }
+        $private:inputObjectList.Add($InputObject)
+    }
+    End
+    {
+        if (!$JoinKeys) { $JoinKeys = $InputKeys }
+        $private:joinDict = [ordered]@{}
+        $private:varList = [System.Collections.Generic.List[PSVariable]]::new()
+        $private:varList.Add([PSVariable]::new('input', $private:inputObjectList))
+        foreach ($private:joinObject in $ScriptBlock.InvokeWithContext($null, $private:varList, $null))
+        {
+            if (!$JoinKeys) { $private:keyValue = '1' }
+            else
+            {
+                $private:keyValue = $(foreach ($private:k in $JoinKeys) { $private:joinObject.$private:k }) -join $KeyJoin
+            }
+
+            if (!$private:joinDict.Contains($private:keyValue))
+            {
+                $private:joinDict[$private:keyValue] = [System.Collections.Generic.List[object]]::new()
+            }
+            $private:joinDict[$private:keyValue].Add($private:joinObject)
+        }
+
+        if (!$KeepProperty -and $private:joinObject) { $KeepProperty = $private:joinObject.PSObject.Properties.Name }
+
+        $private:newPropertyNames = [ordered]@{}
+        foreach ($private:prop in $KeepProperty)
+        {
+            if ($private:prop -is [string]) { $private:newPropertyNames[$private:prop] = $private:prop }
+            elseif ($private:prop -is [hashtable])
+            {
+                foreach ($private:pair in $private:prop.GetEnumerator())
+                {
+                    $private:newPropertyNames[$private:pair.Key] = $private:pair.Value
+                }
+            }
+            else
+            {
+                throw "KeepProperty must contain strings or hashtables."
+            }
+        }
+
+        $KeepProperty = @($private:newPropertyNames.GetEnumerator()).Value
+
+        foreach ($InputObject in $private:inputObjectList)
+        {
+            if (!$InputKeys) { $private:keyValue = '1' }
+            else
+            {
+                $private:keyValue = $(foreach ($private:k in $InputKeys) { $InputObject.$private:k }) -join $KeyJoin
+            }
+
+            $private:joinObjectList = $private:joinDict[$private:keyValue]
+
+            if (!$private:joinObjectList)
+            {
+                return [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $KeepProperty)
+            }
+
+            foreach ($private:joinObject in $private:joinObjectList)
+            {
+                $private:newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $KeepProperty)
+                foreach ($private:pair in $private:newPropertyNames.GetEnumerator())
+                {
+                    $private:newInputObject.($private:pair.Value) = $private:joinObject.($private:pair.Key)
+                }
+                $private:newInputObject
+            }
+        }
+    }
+}
+
 Function Join-TotalRow
 {
     [CmdletBinding(PositionalBinding=$false)]
