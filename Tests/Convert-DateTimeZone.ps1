@@ -45,5 +45,11 @@ Describe "Convert-DateTimeZone" {
             $result = [pscustomobject]@{Time=$local} | Convert-DateTimeZone Time -FromLocal -ToUtc -Format 'yyyy-MM-dd HH:mm:ss' -AppendTimeZone Long
             $result.Time | Should Be "$($local.ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC"
         }
+
+        It 'Can convert by value and format as string' {
+            $local = [DateTime]::Now
+            $result = Convert-DateTimeZone $local -FromLocal -ToUtc -Format 'yyyy-MM-dd HH:mm:ss' -AppendTimeZone Long
+            $result | Should Be "$($local.ToUniversalTime().ToString('yyyy-MM-dd HH:mm:ss')) UTC"
+        }
     }
 }

@@ -1615,26 +1615,29 @@ Function Convert-DateTimeZone
             $toTimeZoneValue = [System.TimeZoneInfo]::FindSystemTimeZoneById($InputObject.$toTimeZoneProperty)
         }
 
+        if ($PSCmdlet.ParameterSetName -eq 'Pipeline')
+        {
+            $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $DateTimeProperty)
+        }
+
         for ($i = 0; $i -lt $dateArrayLength; $i++)
         {
             $originalDateTime = $dateArray[$i]
-            if ($originalDateTime -eq $null) { continue }
+            if ($originalDateTime -eq $null)
+            {
+                if ($PSCmdlet.ParameterSetName -eq 'Value') { return $newValue }
+                $newInputObject.($DateTimeProperty[$i]) = $null
+                continue
+            }
 
             if ($fromTimeZoneMode -eq 'Utc') { $dateTimeUtc = $originalDateTime }
             elseif ($fromTimeZoneMode -eq 'Local') { $dateTimeUtc = $originalDateTime.ToUniversalTime() }
             else { $dateTimeUtc = [TimeZoneInfo]::ConvertTimeToUtc($originalDateTime, $fromTimeZoneValue) }
 
-            if ($toTimeZoneMode -eq 'Utc') { $dateArray[$i] = $dateTimeUtc }
-            elseif ($toTimeZoneMode -eq 'Local') { $dateArray[$i] = $dateTimeUtc.ToLocalTime() }
-            else { $dateArray[$i] = [TimeZoneInfo]::ConvertTimeFromUtc($dateTimeUtc, $toTimeZoneValue) }
-        }
+            if ($toTimeZoneMode -eq 'Utc') { $newValue = $dateTimeUtc }
+            elseif ($toTimeZoneMode -eq 'Local') { $newValue = $dateTimeUtc.ToLocalTime() }
+            else { $newValue = [TimeZoneInfo]::ConvertTimeFromUtc($dateTimeUtc, $toTimeZoneValue) }
 
-        if ($PSCmdlet.ParameterSetName -eq 'Value') { return $dateArray[0] }
-
-        $newInputObject = [Rhodium.Data.DataHelpers]::CloneObject($InputObject, $DateTimeProperty)
-        for ($i = 0; $i -lt $dateArrayLength; $i++)
-        {
-            $newValue = $dateArray[$i]
             if ($Format -and ![String]::IsNullOrWhiteSpace($newValue))
             {
                 $timeZoneLabel = if ($AppendTimeZone)
@@ -1651,6 +1654,9 @@ Function Convert-DateTimeZone
 
                 $newValue = "$($newValue.ToString($Format))$timeZoneLabel"
             }
+
+            if ($PSCmdlet.ParameterSetName -eq 'Value') { return $newValue }
+
             $newInputObject.($DateTimeProperty[$i]) = $newValue
         }
 
